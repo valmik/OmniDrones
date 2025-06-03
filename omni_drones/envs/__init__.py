@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 
-from .single import Hover, Track, FlyThrough
+from .single import Hover, Track, FlyThrough, TrackSimpleFlight
 from .payload import PayloadHover, PayloadTrack, PayloadFlyThrough
 from .inv_pendulum import InvPendulumHover, InvPendulumTrack, InvPendulumFlyThrough
 from .dragon import DragonHover

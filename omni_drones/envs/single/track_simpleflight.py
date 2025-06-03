@@ -36,7 +36,7 @@ from omni.isaac.debug_draw import _debug_draw
 
 from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous
 
-class Track(IsaacEnv):
+class TrackSimpleFlight(IsaacEnv):
     r"""
     A basic control task. The goal for the agent is to track a reference
     lemniscate trajectory in the 3D space.
