@@ -34,7 +34,7 @@ from tensordict.tensordict import TensorDict, TensorDictBase
 from torchrl.data import UnboundedContinuousTensorSpec, CompositeSpec, DiscreteTensorSpec
 from omni.isaac.debug_draw import _debug_draw
 
-from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate
+from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous
 
 class Track(IsaacEnv):
     r"""
@@ -188,6 +188,16 @@ class Track(IsaacEnv):
             elif self.eval_traj == 'fast':
                 self.ref = Lemniscate(T=3.5, origin=self.origin, device=self.device)
                 self.traj_t0 = torch.ones(self.num_envs, 1, device=self.device) * 3.5 / 4
+            elif self.eval_traj == 'lissajous':
+                self.ref = Lissajous(T=30.0, 
+                                     origin=self.origin, 
+                                     ax=3,
+                                     ay=2,
+                                     az=2,
+                                     fx=1.0,
+                                     fy=0.5,
+                                     fz=1.0,
+                                     device=self.device)
 
         self.target_pos = torch.zeros(self.num_envs, self.future_traj_steps, 3, device=self.device)
 
