@@ -1,0 +1,34 @@
+name: Track
+
+defaults:
+  # see https://hydra.cc/docs/advanced/overriding_packages/
+  - /base/env_base@_here_
+  - /base/sim_base@_here_
+
+env:
+  num_envs: 128
+  max_episode_length: 600
+
+drone_model:
+  name: Hummingbird
+  controller: LeePositionController
+
+time_encoding: true
+intrinsics: false
+wind: false
+
+reset_thres: 0.5
+future_traj_steps: 4
+
+use_eval: 0
+eval_traj: 'normal' # poly, zigzag, pentagram, slow, normal, fast
+
+reward_effort_weight: 0.1
+reward_action_smoothness_weight: 0.
+reward_motion_smoothness_weight: 0.
+reward_distance_scale: 5.
+reward_distance_exp: 1.6
+reward_spin_weight: 1.
+reward_up_weight: 1.
+
+action_transform: null
