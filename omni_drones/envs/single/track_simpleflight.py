@@ -34,7 +34,7 @@ from tensordict.tensordict import TensorDict, TensorDictBase
 from torchrl.data import UnboundedContinuousTensorSpec, CompositeSpec, DiscreteTensorSpec
 from omni.isaac.debug_draw import _debug_draw
 
-from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous
+from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous, Constant
 
 class TrackSimpleFlight(IsaacEnv):
     r"""
@@ -129,7 +129,7 @@ class TrackSimpleFlight(IsaacEnv):
             torch.tensor([-.2, -.2, 0.], device=self.device) * torch.pi,
             torch.tensor([0.2, 0.2, 2.], device=self.device) * torch.pi
         )
-        self.origin = torch.tensor([0., 0., 2.], device=self.device)
+        self.origin = torch.tensor([0., 0., 5], device=self.device)
 
         self.ref = [ChainedPolynomial(num_trajs=self.num_envs,
                                 scale=2.5,
@@ -156,29 +156,30 @@ class TrackSimpleFlight(IsaacEnv):
                 torch.tensor([0., 0., 0.], device=self.device) * torch.pi
             )
             if self.eval_traj == 'poly':
-                self.ref = [ChainedPolynomial(num_trajs=self.num_envs,
+                self.ref = ChainedPolynomial(num_trajs=self.num_envs,
                                 scale=2.5,
                                 use_y=True,
+                                use_z=True,
                                 min_dt=1.5,
                                 max_dt=4.0,
                                 degree=5,
                                 origin=self.origin,
-                                device=self.device)]
+                                device=self.device)
             elif self.eval_traj == 'zigzag':
-                self.ref = [RandomZigzag(num_trajs=self.num_envs,
-                                max_D=[1.0, 1.0, 0.0],
+                self.ref = RandomZigzag(num_trajs=self.num_envs,
+                                max_D=[1.0, 1.0, 1.0],
                                 min_dt=1.0,
                                 max_dt=1.5,
                                 diff_axis=True,
                                 origin=self.origin,
-                                device=self.device)]
+                                device=self.device)
             elif self.eval_traj == 'pentagram':
-                self.ref = [NPointedStar(num_trajs=self.num_envs,
+                self.ref = NPointedStar(num_trajs=self.num_envs,
                                 num_points=5,
                                 origin=self.origin,
                                 speed=1.0,
                                 radius=0.7,
-                                device=self.device)]
+                                device=self.device)
             elif self.eval_traj == 'slow':
                 self.ref = Lemniscate(T=15.0, origin=self.origin, device=self.device)
                 self.traj_t0 = torch.ones(self.num_envs, 1, device=self.device) * 15.0 / 4
@@ -189,15 +190,17 @@ class TrackSimpleFlight(IsaacEnv):
                 self.ref = Lemniscate(T=3.5, origin=self.origin, device=self.device)
                 self.traj_t0 = torch.ones(self.num_envs, 1, device=self.device) * 3.5 / 4
             elif self.eval_traj == 'lissajous':
-                self.ref = Lissajous(T=30.0, 
+                self.ref = Lissajous(T=3.0, 
                                      origin=self.origin, 
-                                     ax=3,
-                                     ay=2,
-                                     az=2,
-                                     fx=1.0,
-                                     fy=0.5,
-                                     fz=1.0,
+                                    #  ax=3,
+                                    #  ay=2,
+                                    #  az=2,
+                                    #  fx=1.0,
+                                    #  fy=0.5,
+                                    #  fz=1.0,
                                      device=self.device)
+            elif self.eval_traj == 'constant':
+                self.ref = Constant(pose=[1.0, 2.0, 3.0], origin=self.origin, device=self.device)
 
         self.target_pos = torch.zeros(self.num_envs, self.future_traj_steps, 3, device=self.device)
 
@@ -274,32 +277,20 @@ class TrackSimpleFlight(IsaacEnv):
             self.ref_style_seq[env_ids] = torch.randint(0, 2, (len(env_ids),)).to(self.device)
 
         if self.use_eval:
-            self.ref.reset(env_ids)
+            if isinstance(self.ref, list):
+                self.ref[0].reset(env_ids)
+            else:
+                self.ref.reset(env_ids)
 
-        pos = torch.zeros(len(env_ids), 3, device=self.device)
-        pos = pos + self.origin # init: (0, 0, 1)
+        # pos = torch.zeros(len(env_ids), 3, device=self.device)
+        pos = self._compute_traj(2)
+        pos = pos[env_ids, 0, :]
         rot = euler_to_quaternion(self.init_rpy_dist.sample(env_ids.shape))
         vel = torch.zeros(len(env_ids), 1, 6, device=self.device)
         self.drone.set_world_poses(
             pos + self.envs_positions[env_ids], rot, env_ids
         )
         self.drone.set_velocities(vel, env_ids)
-
-
-        # self.traj_c[env_ids] = self.traj_c_dist.sample(env_ids.shape)
-        # self.traj_rot[env_ids] = euler_to_quaternion(self.traj_rpy_dist.sample(env_ids.shape))
-        # self.traj_scale[env_ids] = self.traj_scale_dist.sample(env_ids.shape)
-        # traj_w = self.traj_w_dist.sample(env_ids.shape)
-        # self.traj_w[env_ids] = torch.randn_like(traj_w).sign() * traj_w
-
-        # t0 = torch.zeros(len(env_ids), device=self.device)
-        # pos = lemniscate(t0 + self.traj_t0, self.traj_c[env_ids]) + self.origin
-        # rot = euler_to_quaternion(self.init_rpy_dist.sample(env_ids.shape))
-        # vel = torch.zeros(len(env_ids), 1, 6, device=self.device)
-        # self.drone.set_world_poses(
-        #     pos + self.envs_positions[env_ids], rot, env_ids
-        # )
-        # self.drone.set_velocities(vel, env_ids)
 
         self.stats[env_ids] = 0.
 
@@ -453,8 +444,15 @@ class TrackSimpleFlight(IsaacEnv):
         else:
             target_pos = []
             for ti in range(t.shape[1]):
-                target_pos.append(self.ref.pos(t[:, ti]))
+                if isinstance(self.ref, list):
+                    pos = self.ref[0].pos(t[:, ti])
+                else:
+                    pos = self.ref.pos(t[:, ti])
+                target_pos.append(pos)
             target_pos = torch.stack(target_pos, dim=1)[env_ids]
+            # Squeeze the time dimension if steps=1
+        if steps == 1:
+            target_pos = target_pos.squeeze(1)
 
         return target_pos
         # t = self.traj_t0 + scale_time(self.traj_w[env_ids].unsqueeze(1) * t * self.dt)
