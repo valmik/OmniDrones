@@ -449,7 +449,7 @@ class TrackSimpleFlight(IsaacEnv):
         if not self.use_eval:
             smooth = self.ref[0].batch_pos(t)
             zigzag = self.ref[1].batch_pos(t)
-            target_pos = smooth * (1 - self.ref_style_seq[env_ids].unsqueeze(1)) + zigzag * self.ref_style_seq[env_ids].unsqueeze(1)
+            target_pos = smooth * (1 - self.ref_style_seq[env_ids].unsqueeze(1).unsqueeze(1)) + zigzag * self.ref_style_seq[env_ids].unsqueeze(1).unsqueeze(1)
         else:
             target_pos = []
             for ti in range(t.shape[1]):
