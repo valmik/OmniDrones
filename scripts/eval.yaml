@@ -4,15 +4,11 @@ hydra:
     # see https://hydra.cc/docs/advanced/search_path/
     - file://../cfg
 
-headless: true
-
 sim: ${task.sim}
 env: ${task.env}
 
-total_frames: 300_000_000
-max_iters: -1
-eval_interval: 100
-save_interval: 100
+headless: true  # Set to true if you don't want an isaac sim window popping up
+
 seed: 0
 
 viewer:
@@ -22,14 +18,20 @@ viewer:
 
 wandb:
   group: ${oc.select:..task.name}
-  run_name: ${oc.select:..task.name,test}-${oc.select:..algo.name,none}-TRAIN
-  job_type: train
+  run_name: ${oc.select:..task.name,test}-${oc.select:..algo.name,none}-EVAL
+  job_type: eval
   entity: valmikp-rl
   project: omnidrones
   mode: online # set to 'disabled' when debugging locally
   run_id:
   monitor_gym: True
   tags:
+
+
+# Evaluation specific settings
+num_episodes: 1  # Number of evaluation episodes to run
+# Must be set to path of saved model
+checkpoint_path: /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/wandb/run-20250603_143503-3sd0r64a/files/checkpoint_92983296.pt
 
 defaults:
   - task: TrackSimpleFlight
