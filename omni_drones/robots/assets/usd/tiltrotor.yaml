@@ -1,0 +1,38 @@
+name: tiltrotor
+inertia:
+  xx: 0.02
+  xy: 0.0
+  xz: 0.0
+  yy: 0.02
+  yz: 0.0
+  zz: 0.04
+mass: 4.04
+l: 0.6
+drag_coef: 0.3
+rotor_configuration:
+  arm_lengths:
+    - 0.3
+    - 0.3
+    - 0.3
+    - 0.3
+  directions:
+    - 1.0 # 0 upper rotor
+    - -1.0 # 1
+    - 1.0 # 2
+    - -1.0 # 3
+  force_constants:
+    - 7.2e-06
+    - 7.2e-06
+    - 7.2e-06
+    - 7.2e-06
+  max_rotation_velocities:
+    - 1700
+    - 1700
+    - 1700
+    - 1700
+  moment_constants:
+    - 1.0799999999999999e-07 # 0 upper rotor
+    - 1.0799999999999999e-07
+    - 1.0799999999999999e-07
+    - 1.0799999999999999e-07
+  num_rotors: 4
