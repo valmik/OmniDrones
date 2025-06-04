@@ -14,6 +14,7 @@ class Polynomial(BaseTrajectory):
     def __init__(self,
                  num_trajs: int,
                  use_y: bool = True,
+                 use_z: bool = True,
                  t_end: float = 10.,
                  degree: int = 5,
                  origin: torch.Tensor = torch.zeros(3),
@@ -28,7 +29,8 @@ class Polynomial(BaseTrajectory):
         self.x_coeffs = torch.zeros(self.num_trajs, self.degree + 1, device=self.device)
         if self.use_y:
             self.y_coeffs = torch.zeros(self.num_trajs, self.degree + 1, device=self.device)
-
+        if self.use_z:
+            self.z_coeffs = torch.zeros(self.num_trajs, self.degree + 1, device=self.device)
         self.reset()
 
     def generate_coeff(self):
@@ -78,6 +80,10 @@ class Polynomial(BaseTrajectory):
         if self.use_y:
             y_coeffs = self.generate_coeff()
             self.y_coeffs[idx] = y_coeffs[idx]
+        if self.use_z:
+            z_coeffs = self.generate_coeff()
+            self.z_coeffs[idx] = z_coeffs[idx]
+
 
     def pos(self, t: torch.Tensor):
         assert t.shape == (self.num_trajs,)
@@ -88,7 +94,10 @@ class Polynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            z = mu.poly(self.z_coeffs, t[..., None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1) + self.origin
 
@@ -101,7 +110,10 @@ class Polynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            z = mu.poly(mu.polyder(self.z_coeffs), t[..., None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1)
     
@@ -114,7 +126,10 @@ class Polynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            z = mu.poly(mu.polyder(self.z_coeffs, 2), t[..., None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1)
     
@@ -127,7 +142,10 @@ class Polynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            z = mu.poly(mu.polyder(self.z_coeffs, 3), t[..., None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1)
 
@@ -140,7 +158,10 @@ class Polynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            z = mu.poly(mu.polyder(self.z_coeffs, 4), t[..., None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1)
 

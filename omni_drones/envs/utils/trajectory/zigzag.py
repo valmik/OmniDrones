@@ -139,7 +139,8 @@ class RandomZigzag(BaseTrajectory):
         left_points[zero] = 0.
         t_left[zero] = 0.
 
-        return left_points + (t[..., None] - t_left) * (right_points - left_points) / (t_right - t_left) + self.origin
+        traj = left_points + (t[..., None] - t_left) * (right_points - left_points) / (t_right - t_left)
+        return traj + self.origin
     
     # only diff_axis = True
     def batch_pos(self, t: Union[float, torch.Tensor]):

@@ -4,17 +4,19 @@ import torch
 try:
     from .base import BaseTrajectory
 except:
-    from base import BaseTrajectory
+    from omni_drones.envs.utils.trajectory.base import BaseTrajectory
 try:
-    import math_utils as mu
-except:
     from ...utils import math_utils as mu 
+except:
+    import omni_drones.envs.utils.math_utils as mu
+
 
 class ChainedPolynomial(BaseTrajectory):
     def __init__(self,
                  num_trajs: int,
                  scale: float = 1.5,
                  use_y: bool = True,
+                 use_z: bool = True,
                  min_dt: float = 1.5,
                  max_dt: float = 4.0,
                  degree: int = 5,
@@ -24,6 +26,7 @@ class ChainedPolynomial(BaseTrajectory):
         assert degree % 2 == 1
 
         self.use_y = use_y
+        self.use_z = use_z
         self.degree = degree
         self.min_dt = min_dt
         self.max_dt = max_dt
@@ -39,6 +42,11 @@ class ChainedPolynomial(BaseTrajectory):
             self.y_coeffs = torch.zeros(self.num_trajs, self.degree + 1, self.num_segments, 
                                         dtype=torch.float32, device=self.device)
             self.T_y = torch.zeros(self.num_trajs, self.num_segments + 1, 
+                                   dtype=torch.float32, device=self.device)
+        if self.use_z:
+            self.z_coeffs = torch.zeros(self.num_trajs, self.degree + 1, self.num_segments, 
+                                        dtype=torch.float32, device=self.device)
+            self.T_z = torch.zeros(self.num_trajs, self.num_segments + 1, 
                                    dtype=torch.float32, device=self.device)
         self.reset()
 
@@ -105,6 +113,16 @@ class ChainedPolynomial(BaseTrajectory):
             self.y_coeffs[idx] = y_coeffs[idx]
             self.T_y[idx] = T_y[idx]
 
+        if self.use_z:
+            dt_z = torch.rand(self.num_trajs, self.num_segments, device=self.device
+                              ) * (self.max_dt - self.min_dt) + self.min_dt
+            T_z = torch.cat([torch.cumsum(dt_z, dim=1),
+                             torch.zeros(self.num_trajs, 1, device=self.device),
+                             ], dim=1).contiguous()
+            z_coeffs = self.generate_coeffs(dt_z)
+            self.z_coeffs[idx] = z_coeffs[idx]
+            self.T_z[idx] = T_z[idx]
+
     def pos(self, t: torch.Tensor):
         assert t.shape == (self.num_trajs,)
 
@@ -121,7 +139,13 @@ class ChainedPolynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            idx_z = torch.searchsorted(self.T_z, t[:, None]).squeeze(-1)
+            offset = self.T_z[torch.arange(self.num_trajs, device=self.device), idx_z - 1]
+            z = mu.poly(self.z_coeffs[torch.arange(self.num_trajs, device=self.device), :, idx_z], 
+                        (t - offset)[:, None],)
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1) + self.origin
 
@@ -132,6 +156,8 @@ class ChainedPolynomial(BaseTrajectory):
         batch_size, num_t = t.shape
         
         idx_x = torch.searchsorted(self.T_x, t).squeeze(-1)
+        if idx_x.ndim == 1:
+            idx_x = idx_x.unsqueeze(1)
         
         offset = self.T_x.gather(1, (idx_x - 1) % self.T_x.shape[1])
 
@@ -145,6 +171,8 @@ class ChainedPolynomial(BaseTrajectory):
 
         if self.use_y:
             idx_y = torch.searchsorted(self.T_y, t).squeeze(-1)
+            if idx_y.ndim == 1:
+                idx_y = idx_y.unsqueeze(1)
             offset = self.T_y.gather(1, (idx_y - 1) % self.T_y.shape[1])
             # expand idx_y
             idx_y_expanded = idx_y.unsqueeze(1).expand(-1, self.y_coeffs.shape[1], -1)
@@ -153,8 +181,16 @@ class ChainedPolynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
-        
+        if self.use_z:
+            idx_z = torch.searchsorted(self.T_z, t).squeeze(-1)
+            if idx_z.ndim == 1:
+                idx_z = idx_z.unsqueeze(1)
+            offset = self.T_z.gather(1, (idx_z - 1) % self.T_z.shape[1])
+            z_coeffs = self.z_coeffs.gather(2, idx_z.unsqueeze(1).expand(-1, self.z_coeffs.shape[1], -1)).transpose(1, 2)
+            z = mu.poly(z_coeffs.reshape(-1, self.degree + 1), (t - offset).reshape(-1, 1),).reshape(self.num_trajs, -1, 1)
+        else:
+            z = x * 0.
+
         return torch.cat([x, y, z], dim=-1) + self.origin # [num_traj, num_timepoints, 3]
 
     def vel(self, t: torch.Tensor):
@@ -175,7 +211,14 @@ class ChainedPolynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            idx_z = torch.searchsorted(self.T_z, t[:, None]).squeeze(-1)
+            offset = self.T_z[torch.arange(self.num_trajs, device=self.device), idx_z - 1]
+            z = mu.poly(mu.polyder(
+                self.z_coeffs[torch.arange(self.num_trajs, device=self.device), :, idx_z]), 
+                (t - offset)[:, None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1)
     
@@ -197,7 +240,14 @@ class ChainedPolynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            idx_z = torch.searchsorted(self.T_z, t[:, None]).squeeze(-1)
+            offset = self.T_z[torch.arange(self.num_trajs, device=self.device), idx_z - 1]
+            z = mu.poly(mu.polyder(
+                self.z_coeffs[torch.arange(self.num_trajs, device=self.device), :, idx_z], 2), 
+                (t - offset)[:, None])
+        else:
+            z = x * 0.  
 
         return torch.cat([x, y, z], dim=-1)
 
@@ -219,7 +269,14 @@ class ChainedPolynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            idx_z = torch.searchsorted(self.T_z, t[:, None]).squeeze(-1)
+            offset = self.T_z[torch.arange(self.num_trajs, device=self.device), idx_z - 1]
+            z = mu.poly(mu.polyder(
+                self.z_coeffs[torch.arange(self.num_trajs, device=self.device), :, idx_z], 3), 
+                (t - offset)[:, None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1)
     
@@ -241,69 +298,54 @@ class ChainedPolynomial(BaseTrajectory):
         else:
             y = x * 0.
 
-        z = x * 0.
+        if self.use_z:
+            idx_z = torch.searchsorted(self.T_z, t[:, None]).squeeze(-1)
+            offset = self.T_z[torch.arange(self.num_trajs, device=self.device), idx_z - 1]
+            z = mu.poly(mu.polyder(
+                self.z_coeffs[torch.arange(self.num_trajs, device=self.device), :, idx_z], 4), 
+                (t - offset)[:, None])
+        else:
+            z = x * 0.
 
         return torch.cat([x, y, z], dim=-1)
     
 
 if __name__ == "__main__":
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import time
+    
+    # Create test trajectory
     num_traj = 2000
-    # scale = 1.5, dt: 1.5~4.0 -> v_max = 1.74
-    # scale = 2.0, dt: 1.5~4.0 -> v_max = 2.31
-    # scale = 2.5, dt: 1.5~4.0 -> v_max = 2.9
     ref = ChainedPolynomial(num_traj, scale=1.0, min_dt=1.5, max_dt=4.0, degree=5)
 
+    # Generate time points
     t = torch.stack([torch.arange(0, 10, 0.004) for _ in range(num_traj)], dim=0)
 
+    # Get positions
     pos = ref.batch_pos(t).cpu().numpy()  # [num_trajs, num_time_points, 3]
 
-    # pos = []
+    # Get velocities, accelerations, jerks and snaps
     vel = []
-    # acc = []
-    # jerk = []
-    # snap = []
+    acc = []
+    jerk = []
+    snap = []
     for ti in range(t.shape[1]):
-    #     pos.append(ref.pos(t[:, ti]))
         vel.append(ref.vel(t[:, ti]))
-    #     acc.append(ref.acc(t[:, ti]))
-    #     jerk.append(ref.jerk(t[:, ti]))
-    #     snap.append(ref.snap(t[:, ti]))
+        acc.append(ref.acc(t[:, ti]))
+        jerk.append(ref.jerk(t[:, ti]))
+        snap.append(ref.snap(t[:, ti]))
 
-    # pos = torch.stack(pos, dim=1).cpu().numpy()
     vel = torch.stack(vel, dim=1).cpu().numpy()
     acc = torch.stack(acc, dim=1).cpu().numpy()
     jerk = torch.stack(jerk, dim=1).cpu().numpy()
     snap = torch.stack(snap, dim=1).cpu().numpy()
-    import numpy as np
-    breakpoint()
-    # def save_to_header(variable_name, data, filename):
-    #     with open(filename, 'w') as f:
-    #         f.write(f'static const float {variable_name}[{data.shape[0]}][{data.shape[1]}][{data.shape[2]}] = {{\n')
-    #         for i in range(data.shape[0]):
-    #             f.write('  {\n')
-    #             for j in range(data.shape[1]):
-    #                 values = ', '.join(f'{value}f' for value in data[i][j])
-    #                 f.write(f'    {{{values}}}')
-    #                 if j < data.shape[1] - 1:
-    #                     f.write(',\n')
-    #                 else:
-    #                     f.write('\n')
-    #             f.write('  }')
-    #             if i < data.shape[0] - 1:
-    #                 f.write(',\n')
-    #             else:
-    #                 f.write('\n')
-    #         f.write('};\n')
 
-    # save_to_header('pos_smooth', pos, 'pos_smooth.h')
-    # save_to_header('vel_smooth', vel, 'vel_smooth.h')
-
+    # Plot results
     plot_idx = 1
-    import matplotlib.pyplot as plt
-    import time
-    
     datetime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime(time.time()))
 
+    # Plot 3D trajectory
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(pos[plot_idx, :,0], pos[plot_idx, :,1], pos[plot_idx, :,2])
@@ -311,8 +353,8 @@ if __name__ == "__main__":
     ax.set_ylabel('y')
     ax.set_zlabel('z')
     plt.savefig(f'chainedpoly-{datetime}.png')
-    breakpoint()
 
+    # Plot x,y,z components
     fig, axs = plt.subplots(3, 5, figsize=(50, 10))
     for i in range(3):
         axs[i,0].plot(t[plot_idx], pos[plot_idx, :,i])

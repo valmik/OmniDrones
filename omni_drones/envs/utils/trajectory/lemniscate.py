@@ -14,7 +14,7 @@ class Lemniscate():
         cos_t = torch.cos(2 * torch.pi * t / self.T)
 
         x = torch.stack([
-            cos_t, sin_t * cos_t, torch.zeros_like(t)
+            cos_t, sin_t * cos_t, sin_t*cos_t
         ], dim=-1)
         
         # v = torch.stack([
