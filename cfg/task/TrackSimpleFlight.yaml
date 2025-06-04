@@ -15,17 +15,17 @@ drone_model:
 
 time_encoding: true
 intrinsics: false
-wind: false
+wind: true
 
 reset_thres: 0.5
 future_traj_steps: 4
 
-use_eval: 0
-eval_traj: 'normal' # poly, zigzag, pentagram, slow, normal, fast, lissajous
+use_eval: true
+eval_traj: 'normal' # poly, zigzag, pentagram, slow, normal, fast, lissajous, constant
 
 reward_effort_weight: 0.1
-reward_action_smoothness_weight: 0.
-reward_motion_smoothness_weight: 0.
+reward_action_smoothness_weight: 0.0
+reward_motion_smoothness_weight: 0.0
 reward_distance_scale: 5.
 reward_distance_exp: 1.6
 reward_spin_weight: 1.
