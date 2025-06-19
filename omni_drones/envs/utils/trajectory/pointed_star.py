@@ -109,6 +109,43 @@ class NPointedStar(BaseTrajectory):
 
         return torch.stack([x, y, torch.zeros_like(t)], dim=-1) + self.origin
 
+    def batch_pos(self, t: torch.Tensor):
+        """
+        Compute positions for batched time inputs.
+        Args:
+            t: torch.Tensor of shape [num_trajs, num_time_points]
+        Returns:
+            torch.Tensor of shape [num_trajs, num_time_points, 3]
+        """
+        assert t.ndim == 2 and t.shape[0] == self.num_trajs, "t must be of shape [num_trajs, num_time_points]"
+        
+        init_phase = t < self.time_to_start
+        cyclic_t = (t - self.time_to_start).clamp(min=0) % self.total_time.unsqueeze(1)
+        
+        idx = (cyclic_t / self.dT.unsqueeze(1)).floor().long() + 1
+        
+        # Get points for each trajectory and time point
+        pointA = self.points[torch.arange(self.num_trajs).unsqueeze(1), 
+                           ((idx - 1) * (self.n_points // 2)) % self.n_points]
+        pointB = self.points[torch.arange(self.num_trajs).unsqueeze(1), 
+                           (idx * (self.n_points // 2)) % self.n_points]
+        
+        # Handle initial phase
+        pointA[init_phase] = torch.zeros_like(pointA[init_phase])
+        pointB[init_phase] = self.points[torch.arange(self.num_trajs), 0].unsqueeze(1).expand(-1, t.shape[1], -1)[init_phase]
+        
+        # Calculate positions
+        x = pointA[..., 0] + (pointB[..., 0] - pointA[..., 0]) * (cyclic_t % self.dT.unsqueeze(1)) / self.dT.unsqueeze(1)
+        y = pointA[..., 1] + (pointB[..., 1] - pointA[..., 1]) * (cyclic_t % self.dT.unsqueeze(1)) / self.dT.unsqueeze(1)
+        
+        # Handle initial phase positions
+        x[init_phase] = (pointA[..., 0] + (pointB[..., 0] - pointA[..., 0]) * t / self.time_to_start)[init_phase]
+        y[init_phase] = (pointA[..., 1] + (pointB[..., 1] - pointA[..., 1]) * t / self.time_to_start)[init_phase]
+        
+        # Ensure origin has correct shape for broadcasting
+        origin = self.origin.view(1, 1, -1).expand(t.shape[0], t.shape[1], -1)
+        return torch.stack([x, y, torch.zeros_like(t)], dim=-1) + origin
+
     def vel(self, t: Union[float, torch.Tensor]):
         t = torch.as_tensor(t)
 

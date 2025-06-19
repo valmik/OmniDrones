@@ -79,6 +79,18 @@ class BaseTrajectory():
             
         return p + self.origin
     
+    def batch_pos(self, t: torch.Tensor):
+        """
+        Compute positions for batched time inputs.
+        Args:
+            t: torch.Tensor of shape [num_trajs, num_time_points]
+        Returns:
+            torch.Tensor of shape [num_trajs, num_time_points, 3]
+        """
+        assert t.ndim == 2 and t.shape[0] == self.num_trajs, "t must be of shape [num_trajs, num_time_points]"
+        p = torch.zeros(self.num_trajs, t.shape[1], 3, device=self.device)
+        return p + self.origin.unsqueeze(1)
+    
     def vel(self, t: Union[float, torch.Tensor]):
         if isinstance(t, (float, int)) or t.shape==torch.Size([]):
             return torch.tensor([t*0, t*0, t*0]).float().to(self.device)

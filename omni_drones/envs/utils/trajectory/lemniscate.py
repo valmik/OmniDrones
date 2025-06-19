@@ -22,3 +22,23 @@ class Lemniscate():
         # ], dim=-1)
         
         return (x + self.origin).to(self.device)
+
+    def batch_pos(self, t: torch.Tensor):
+        """
+        Compute positions for batched time inputs.
+        Args:
+            t: torch.Tensor of shape [num_trajs, num_time_points]
+        Returns:
+            torch.Tensor of shape [num_trajs, num_time_points, 3]
+        """
+        assert t.ndim == 2, "t must be of shape [num_trajs, num_time_points]"
+        sin_t = torch.sin(2 * torch.pi * t / self.T)
+        cos_t = torch.cos(2 * torch.pi * t / self.T)
+
+        x = torch.stack([
+            cos_t, sin_t * cos_t, sin_t * cos_t
+        ], dim=-1)
+        
+        # Ensure origin has correct shape for broadcasting
+        origin = self.origin.view(1, 1, -1).expand(x.shape[0], x.shape[1], -1)
+        return (x + origin).to(self.device)

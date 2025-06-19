@@ -2,7 +2,7 @@ import torch
 
 class Lissajous():
     def __init__(self, 
-                 T: float = 3.0,
+                 T: float = 2.0,
                  origin: torch.Tensor = torch.zeros(3),
                  ax: float = 3.0,
                  ay: float = 1.0,
@@ -38,3 +38,21 @@ class Lissajous():
 
         pos = torch.stack([x, y, z], dim=-1)
         return (pos + self.origin).to(self.device)
+
+    def batch_pos(self, t: torch.Tensor):
+        """
+        Compute positions for batched time inputs.
+        Args:
+            t: torch.Tensor of shape [num_trajs, num_time_points]
+        Returns:
+            torch.Tensor of shape [num_trajs, num_time_points, 3]
+        """
+        assert t.ndim == 2, "t must be of shape [num_trajs, num_time_points]"
+        x = self.ax * torch.sin(self.fx * t / self.T + self.del_x)
+        y = self.ay * torch.sin(self.fy * t / self.T + self.del_y)
+        z = self.az * torch.sin(self.fz * t / self.T + self.del_z)
+
+        pos = torch.stack([x, y, z], dim=-1)
+        # Ensure origin has correct shape for broadcasting
+        origin = self.origin.view(1, 1, -1).expand(t.shape[0], t.shape[1], -1)
+        return (pos + origin).to(self.device)
