@@ -3,6 +3,8 @@ hydra:
   searchpath:
     # see https://hydra.cc/docs/advanced/search_path/
     - file://../cfg
+  run:
+    dir: outputs/${wandb.project}/${wandb.group}/${wandb.run_name}/${now:%Y-%m-%d_%H-%M-%S}
 
 headless: true
 
@@ -12,6 +14,7 @@ env: ${task.env}
 total_frames: 300_000_000
 max_iters: -1
 eval_interval: 100
+major_eval_interval: 500
 save_interval: 100
 seed: 0
 
@@ -22,14 +25,125 @@ viewer:
 
 wandb:
   group: ${oc.select:..task.name}
-  run_name: ${oc.select:..task.name,test}-${oc.select:..algo.name,none}-TRAIN
+  # run_name: ${oc.select:..task.name,test}-${oc.select:..algo.name,none}-TRAIN
+  run_name: ${oc.select:..task.drone_model.controller}-${oc.select:..algo.name,none}-windis-${oc.select:..task.wind,false}-TRAIN
   job_type: train
   entity: valmikp-rl
-  project: omnidrones
+  project: quadrotor-geometric-performance
   mode: online # set to 'disabled' when debugging locally
   run_id:
   monitor_gym: True
   tags:
+
+major_eval_configs:
+  lemniscate_no_wind:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'normal'
+      wind: false
+  lemniscate_no_wind_alt_view:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'normal'
+      wind: false
+    viewer:
+      resolution: [960, 720]
+      eye: [8, 8., 12.]
+      lookat: [0., 0., 5.]
+  lemniscate_with_wind:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'normal'
+      wind: true
+  lemniscate_with_wind_alt_view:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'normal'
+      wind: true  
+    viewer:
+      resolution: [960, 720]
+      eye: [8, 8., 12.]
+      lookat: [0., 0., 5.]
+  lissajous_no_wind:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'lissajous'
+      wind: false
+  lissajous_no_wind_alt_view:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'lissajous'
+      wind: false   
+    viewer:
+      resolution: [960, 720]
+      eye: [8, 8., 12.]
+      lookat: [0., 0., 5.]
+  lissajous_with_wind:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'lissajous'
+      wind: true
+  lissajous_with_wind_alt_view:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'lissajous'
+      wind: true
+    viewer:
+      resolution: [960, 720]
+      eye: [8, 8., 12.]
+      lookat: [0., 0., 5.]
+  lissajous_fancy_no_wind:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'lissajous_fancy'
+      wind: false
+  lissajous_fancy_no_wind_alt_view:
+    env:
+      max_episode_length: 1500
+      num_envs: 1
+    task:
+      traj_type: 'lissajous_fancy'
+      wind: false   
+    viewer:
+      resolution: [960, 720]
+      eye: [8, 8., 12.]
+      lookat: [0., 0., 5.]
+  lissajous_fancy_with_wind:
+    env:
+      max_episode_length: 1500    
+      num_envs: 1
+    task:
+      traj_type: 'lissajous_fancy'
+      wind: true
+  lissajous_fancy_with_wind_alt_view:
+    env:
+      max_episode_length: 1500  
+      num_envs: 1
+    task:
+      traj_type: 'lissajous_fancy'
+      wind: true
+    viewer:
+      resolution: [960, 720]
+      eye: [8, 8., 12.]
+      lookat: [0., 0., 5.]
 
 defaults:
   - task: TrackSimpleFlight
