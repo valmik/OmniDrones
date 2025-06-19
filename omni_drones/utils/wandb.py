@@ -54,7 +54,7 @@ def dict_flatten(a: dict, delim="."):
     return result
 
 
-def init_wandb(cfg):
+def init_wandb(cfg, save_dir=None):
     """Initialize WandB.
 
     If only `run_id` is given, resume from the run specified by `run_id`.
@@ -74,6 +74,7 @@ def init_wandb(cfg):
         name=run_name,
         mode=wandb_cfg.mode,
         tags=wandb_cfg.tags,
+        dir=save_dir,
     )
     if wandb_cfg.run_id is not None:
         kwargs["id"] = wandb_cfg.run_id
