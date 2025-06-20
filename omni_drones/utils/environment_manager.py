@@ -337,9 +337,9 @@ def plot_3d_trajectory(position: np.ndarray, target_position: np.ndarray | None,
                 label='Target Position', linewidth=2, linestyle='--')
     
     # Add labels and legend
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    ax.set_xlabel('X, m')
+    ax.set_ylabel('Y, m')
+    ax.set_zlabel('Z, m')
     ax.legend()
     
     # Set equal aspect ratio
@@ -372,7 +372,7 @@ def plot_trajectory_position(
         time = np.arange(len(position))
         time_label = 'Step'
     else:
-        time_label = 'Time'
+        time_label = 'Time, s'
 
     if wind_acceleration is not None and np.isclose(wind_acceleration, 0).all():
         wind_acceleration = None
@@ -386,7 +386,7 @@ def plot_trajectory_position(
     line_x_pos = ax_x.plot(time, position[:, 0], label='Position', linewidth=2, color='blue')
     if target_position is not None:
         line_x_target = ax_x.plot(time, target_position[:, 0], label='Target', linewidth=2, linestyle='--', color='red')
-    ax_x.set_ylabel('X Position', color='blue')
+    ax_x.set_ylabel('X Position, m', color='blue')
     ax_x.tick_params(axis='y', labelcolor='blue')
     ax_x.grid(True)
     
@@ -394,7 +394,7 @@ def plot_trajectory_position(
     if wind_acceleration is not None:
         ax_x_wind = ax_x.twinx()
         line_x_wind = ax_x_wind.plot(time, wind_acceleration[:, 0], label='Wind Accel', linewidth=1.5, color='green', alpha=0.7)
-        ax_x_wind.set_ylabel('Wind Acceleration X', color='green')
+        ax_x_wind.set_ylabel('Wind Acceleration X, m/s^2', color='green')
         ax_x_wind.tick_params(axis='y', labelcolor='green')
         
         # Combine legends
@@ -408,7 +408,7 @@ def plot_trajectory_position(
     line_y_pos = ax_y.plot(time, position[:, 1], label='Position', linewidth=2, color='blue')
     if target_position is not None:
         line_y_target = ax_y.plot(time, target_position[:, 1], label='Target', linewidth=2, linestyle='--', color='red')
-    ax_y.set_ylabel('Y Position', color='blue')
+    ax_y.set_ylabel('Y Position, m', color='blue')
     ax_y.tick_params(axis='y', labelcolor='blue')
     ax_y.grid(True)
     
@@ -416,7 +416,7 @@ def plot_trajectory_position(
     if wind_acceleration is not None:
         ax_y_wind = ax_y.twinx()
         line_y_wind = ax_y_wind.plot(time, wind_acceleration[:, 1], label='Wind Accel', linewidth=1.5, color='green', alpha=0.7)
-        ax_y_wind.set_ylabel('Wind Acceleration Y', color='green')
+        ax_y_wind.set_ylabel('Wind Acceleration Y, m/s^2', color='green')
         ax_y_wind.tick_params(axis='y', labelcolor='green')
         
         # Combine legends
@@ -431,7 +431,7 @@ def plot_trajectory_position(
     if target_position is not None:
         line_z_target = ax_z.plot(time, target_position[:, 2], label='Target', linewidth=2, linestyle='--', color='red')
     ax_z.set_xlabel(time_label)
-    ax_z.set_ylabel('Z Position', color='blue')
+    ax_z.set_ylabel('Z Position, m', color='blue')
     ax_z.tick_params(axis='y', labelcolor='blue')
     ax_z.grid(True)
     
@@ -439,7 +439,7 @@ def plot_trajectory_position(
     if wind_acceleration is not None:
         ax_z_wind = ax_z.twinx()
         line_z_wind = ax_z_wind.plot(time, wind_acceleration[:, 2], label='Wind Accel', linewidth=1.5, color='green', alpha=0.7)
-        ax_z_wind.set_ylabel('Wind Acceleration Z', color='green')
+        ax_z_wind.set_ylabel('Wind Acceleration Z, m/s^2', color='green')
         ax_z_wind.tick_params(axis='y', labelcolor='green')
         
         # Combine legends
@@ -471,7 +471,7 @@ def plot_trajectory_rpy(rpy: np.ndarray, time: np.ndarray | None, eval_name: str
         time = np.arange(len(rpy))
         time_label = 'Step'
     else:
-        time_label = 'Time'
+        time_label = 'Time, s'
     
     ax_roll = fig.add_subplot(311)
     ax_pitch = fig.add_subplot(312)
@@ -481,9 +481,9 @@ def plot_trajectory_rpy(rpy: np.ndarray, time: np.ndarray | None, eval_name: str
     ax_pitch.plot(time, rpy[:, 1], label='Pitch', linewidth=2)
     ax_yaw.plot(time, rpy[:, 2], label='Yaw', linewidth=2)
 
-    ax_roll.set_ylabel('Roll')
-    ax_pitch.set_ylabel('Pitch')
-    ax_yaw.set_ylabel('Yaw')
+    ax_roll.set_ylabel('Roll, rad')
+    ax_pitch.set_ylabel('Pitch, rad')
+    ax_yaw.set_ylabel('Yaw, rad')
 
     ax_yaw.set_xlabel(time_label) 
 
