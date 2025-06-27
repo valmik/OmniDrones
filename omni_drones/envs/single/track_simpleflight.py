@@ -44,7 +44,7 @@ from omni.kit.viewport.utility import get_active_viewport_window
 
 
 import omegaconf
-from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous, Constant
+from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous, Constant, RandomLissajous
 
 class TrackSimpleFlight(IsaacEnv):
     r"""
@@ -204,6 +204,11 @@ class TrackSimpleFlight(IsaacEnv):
                                 min_dt=1.0,
                                 max_dt=1.5,
                                 diff_axis=True,
+                                origin=self.origin,
+                                device=self.device)
+        elif traj_name == 'random_lissajous':
+            ref = RandomLissajous(num_trajs=self.num_envs,
+                                  T=5.0,
                                 origin=self.origin,
                                 device=self.device)
         elif traj_name == 'pentagram':
@@ -537,8 +542,6 @@ class TrackSimpleFlight(IsaacEnv):
 
         self.draw.draw_lines(point_list_0, point_list_1, colors, sizes)
         
-        
-
     def _visualize_wind(self):
         """Visualize wind vector using Isaac Lab's 3D arrow markers"""
         if not self.wind or not self._should_render(0):
@@ -602,7 +605,6 @@ class TrackSimpleFlight(IsaacEnv):
             marker_indices=marker_indices,
             scales=arrow_scale
         )
-
 
     def _create_wind_overlay(self, wind_magnitude):
         """Create a text label to display wind information"""
