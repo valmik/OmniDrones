@@ -17,6 +17,8 @@ eval_interval: 100
 major_eval_interval: 500
 save_interval: 100
 seed: 0
+render_during_minor_eval: true
+render_during_major_eval: true
 
 viewer:
   resolution: [960, 720]
