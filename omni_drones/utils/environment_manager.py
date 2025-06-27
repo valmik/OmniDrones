@@ -158,7 +158,8 @@ def evaluate_with_manager(
     eval_diffs: Dict[str, Any],
     policy,
     seed: int = 0,
-    exploration_type=None
+    exploration_type=None,
+    render=True
 ):
     """Evaluate using the environment manager."""
     
@@ -173,7 +174,7 @@ def evaluate_with_manager(
     env.set_seed(seed)
     
     # Run evaluation
-    info, traj_data = evaluate_single_env_direct(env, base_env, policy, eval_name, seed, exploration_type)
+    info, traj_data = evaluate_single_env_direct(env, base_env, policy, eval_name, seed, exploration_type, render)
     
     # Clean up after evaluation
     base_env.enable_render(not eval_env_manager.base_cfg.get("headless", True))
@@ -186,7 +187,7 @@ def evaluate_with_manager(
     return info, traj_data
 
 @torch.no_grad()
-def evaluate_current_env(manager, policy, seed, exploration_type):
+def evaluate_current_env(manager, policy, seed, exploration_type, render=True):
     """Evaluate the current environment."""
     env = manager.current_env
     base_env = manager.current_base_env
@@ -200,7 +201,7 @@ def evaluate_current_env(manager, policy, seed, exploration_type):
     env.eval()
     env.set_seed(seed)
 
-    info, traj_data = evaluate_single_env_direct(env, base_env, policy, eval_name, seed, exploration_type)
+    info, traj_data = evaluate_single_env_direct(env, base_env, policy, eval_name, seed, exploration_type, render)
 
     base_env.enable_render(not manager.base_cfg.get("headless", True))
 
@@ -210,13 +211,13 @@ def evaluate_current_env(manager, policy, seed, exploration_type):
     return info, traj_data
 
 @torch.no_grad()
-def evaluate_single_env_direct(env, base_env, policy, eval_name, seed, exploration_type):
+def evaluate_single_env_direct(env, base_env, policy, eval_name, seed, exploration_type, render=True):
     """Direct evaluation without environment creation."""
     from omni_drones.utils.torchrl import RenderCallback
     from torchrl.envs.utils import set_exploration_type
     import wandb
 
-    render_callback = RenderCallback(interval=2)
+    render_callback = RenderCallback(interval=2) if render else None
     
     with set_exploration_type(exploration_type):
         trajs = env.rollout(
@@ -260,11 +261,12 @@ def evaluate_single_env_direct(env, base_env, policy, eval_name, seed, explorati
     }
     
     # Add video if needed
-    info[f"eval_{eval_name}/recording"] = wandb.Video(
-        render_callback.get_video_array(axes="t c h w"),
-        fps=0.5 / (base_env.dt * base_env.substeps),
-        format="mp4"
-    )
+    if render:
+        info[f"eval_{eval_name}/recording"] = wandb.Video(
+            render_callback.get_video_array(axes="t c h w"),
+            fps=0.5 / (base_env.dt * base_env.substeps),
+            format="mp4"
+        )
 
     # Make trajectory plots
     plot_info = make_trajectory_plots(traj_data, eval_name, central_env_idx)

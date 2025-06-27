@@ -4,10 +4,7 @@ import time
 
 import hydra
 import torch
-import numpy as np
-import pandas as pd
 import wandb
-import matplotlib.pyplot as plt
 
 from torch.func import vmap
 from tqdm import tqdm
@@ -39,13 +36,14 @@ def evaluate(
         current_frames,
         wandb_run,
         hydra_dir,
-        exploration_type: ExplorationType = ExplorationType.MODE
+        exploration_type: ExplorationType = ExplorationType.MODE,
+        render: bool = True
     ):
     from omni_drones.utils.environment_manager import evaluate_with_manager
 
     for eval_name, eval_diff in eval_configs.items():
         info = {"env_frames": current_frames}
-        eval_info, traj_data = evaluate_with_manager(env_manager, eval_name, eval_diff, policy, seed=seed, exploration_type=exploration_type)
+        eval_info, traj_data = evaluate_with_manager(env_manager, eval_name, eval_diff, policy, seed=seed, exploration_type=exploration_type, render=render)
         info.update(eval_info)
         wandb_run.log(info, commit=False)
         save_traj_data(traj_data, eval_name, seed, current_frames, hydra_dir)
@@ -78,8 +76,6 @@ def save_traj_data(traj_data, eval_name, seed, current_frames, hydra_dir):
     # Add pickle file to wandb
     wandb.save(traj_file, base_path=hydra_dir)
     
-
-
 def run_training_segment(
         env_manager, 
         policy, 
@@ -87,7 +83,8 @@ def run_training_segment(
         episode_stats, 
         hydra_dir,
         wandb_run, 
-        start_iteration=0
+        start_iteration=0,
+        render_during_minor_eval: bool = True
         ):
     
     from omni_drones.utils.environment_manager import evaluate_current_env
@@ -153,7 +150,7 @@ def run_training_segment(
             except Exception as e:
                 logging.warning(f"Error clearing CUDA cache: {e}")
 
-            eval_info, traj_data = evaluate_current_env(env_manager, policy, cfg.seed, ExplorationType.MODE)
+            eval_info, traj_data = evaluate_current_env(env_manager, policy, cfg.seed, ExplorationType.MODE, render=render_during_minor_eval)
             info.update(eval_info)
             save_traj_data(traj_data, "training", cfg.seed, start_frame + collector._frames, hydra_dir)
        
@@ -187,7 +184,6 @@ def run_training_segment(
     time.sleep(0.1)
 
     return final_frames, final_fps, final_iteration
-
 
 def create_env(cfg):
     from omni_drones.envs.isaac_env import IsaacEnv
@@ -225,8 +221,6 @@ def create_env(cfg):
 
     return env, base_env
 
-
-
 @hydra.main(version_base=None, config_path=".", config_name="train")
 def main(cfg):
     OmegaConf.register_new_resolver("eval", eval)
@@ -238,7 +232,7 @@ def main(cfg):
     setproctitle(run.name)
     print(OmegaConf.to_yaml(cfg))
 
-    from omni_drones.utils.environment_manager import EvalEnvironmentManager, evaluate_with_manager
+    from omni_drones.utils.environment_manager import EvalEnvironmentManager
 
     env, base_env = create_env(cfg)
 
@@ -263,6 +257,8 @@ def main(cfg):
     total_frames = cfg.get("total_frames", -1) // frames_per_batch * frames_per_batch
     max_iters = cfg.get("max_iters", -1)
     major_eval_interval = cfg.get("major_eval_interval", -1)
+    render_during_major_eval = cfg.get("render_during_major_eval", True)
+    render_during_minor_eval = cfg.get("render_during_minor_eval", True)
 
     stats_keys = [
         k for k in base_env.observation_spec.keys(True, True)
@@ -275,7 +271,7 @@ def main(cfg):
     current_iteration = 0
 
     logging.info(f"Eval at {current_frames} steps (iteration {current_iteration}).")
-    _, _ = evaluate(env_manager, major_eval_configs, policy, cfg.seed, current_frames, run, hydra_dir)
+    _, _ = evaluate(env_manager, major_eval_configs, policy, cfg.seed, current_frames, run, hydra_dir, render=render_during_major_eval)
 
 
     def should_continue():
@@ -293,15 +289,17 @@ def main(cfg):
                 episode_stats, 
                 hydra_dir, 
                 run, 
-                current_iteration
+                current_iteration,
+                render=render_during_minor_eval
             )
                 
         if should_continue() and major_eval_interval > 0:
             logging.info(f"Eval at {current_frames} steps (iteration {current_iteration}).")
-            _, _ = evaluate(env_manager, major_eval_configs, policy, cfg.seed, current_frames, run, hydra_dir)
+            _, _ = evaluate(env_manager, major_eval_configs, policy, cfg.seed, current_frames, run, hydra_dir, render=render_during_major_eval)
 
     logging.info(f"Final Eval at {current_frames} steps (iteration {current_iteration}).")
-    _, _ = evaluate(env_manager, major_eval_configs, policy, cfg.seed, current_frames, run, hydra_dir)
+    _, _ = evaluate(env_manager, major_eval_configs, policy, cfg.seed, current_frames, run, hydra_dir, render=render_during_major_eval)
+    run.log({'env_frames': current_frames})
 
     try:
         ckpt_path = os.path.join(run.dir, "checkpoint_final.pt")
