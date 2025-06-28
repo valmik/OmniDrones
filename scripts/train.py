@@ -290,7 +290,7 @@ def main(cfg):
                 hydra_dir, 
                 run, 
                 current_iteration,
-                render=render_during_minor_eval
+                render_during_minor_eval=render_during_minor_eval
             )
                 
         if should_continue() and major_eval_interval > 0:
