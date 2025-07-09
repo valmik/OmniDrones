@@ -6,7 +6,7 @@ defaults:
   - /base/sim_base@_here_
 
 env:
-  num_envs: 128
+  num_envs: 512
   max_episode_length: 600
 
 drone_model:
@@ -20,7 +20,7 @@ time_encoding: true
 intrinsics: false
 wind: true
 
-reset_thres: 1.5
+reset_thres: 2.0
 future_traj_steps: 4
 
 traj_type: ['poly', 'zigzag'] # poly, zigzag, pentagram, slow, normal, fast, lissajous, lissajous_fancy, constant
