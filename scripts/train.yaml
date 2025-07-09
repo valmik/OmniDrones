@@ -45,17 +45,17 @@ major_eval_configs:
     task:
       traj_type: 'normal'
       wind: false
-  lemniscate_no_wind_alt_view:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'normal'
-      wind: false
-    viewer:
-      resolution: [960, 720]
-      eye: [8, 8., 12.]
-      lookat: [0., 0., 5.]
+  # lemniscate_no_wind_alt_view:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'normal'
+  #     wind: false
+  #   viewer:
+  #     resolution: [960, 720]
+  #     eye: [8, 8., 12.]
+  #     lookat: [0., 0., 5.]
   lemniscate_with_wind:
     env:
       max_episode_length: 1500
@@ -63,17 +63,17 @@ major_eval_configs:
     task:
       traj_type: 'normal'
       wind: true
-  lemniscate_with_wind_alt_view:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'normal'
-      wind: true  
-    viewer:
-      resolution: [960, 720]
-      eye: [8, 8., 12.]
-      lookat: [0., 0., 5.]
+  # lemniscate_with_wind_alt_view:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'normal'
+  #     wind: true  
+  #   viewer:
+  #     resolution: [960, 720]
+  #     eye: [8, 8., 12.]
+  #     lookat: [0., 0., 5.]
   lissajous_no_wind:
     env:
       max_episode_length: 1500
@@ -81,17 +81,17 @@ major_eval_configs:
     task:
       traj_type: 'lissajous'
       wind: false
-  lissajous_no_wind_alt_view:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'lissajous'
-      wind: false   
-    viewer:
-      resolution: [960, 720]
-      eye: [8, 8., 12.]
-      lookat: [0., 0., 5.]
+  # lissajous_no_wind_alt_view:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'lissajous'
+  #     wind: false   
+  #   viewer:
+  #     resolution: [960, 720]
+  #     eye: [8, 8., 12.]
+  #     lookat: [0., 0., 5.]
   lissajous_with_wind:
     env:
       max_episode_length: 1500
@@ -99,17 +99,17 @@ major_eval_configs:
     task:
       traj_type: 'lissajous'
       wind: true
-  lissajous_with_wind_alt_view:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'lissajous'
-      wind: true
-    viewer:
-      resolution: [960, 720]
-      eye: [8, 8., 12.]
-      lookat: [0., 0., 5.]
+  # lissajous_with_wind_alt_view:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'lissajous'
+  #     wind: true
+  #   viewer:
+  #     resolution: [960, 720]
+  #     eye: [8, 8., 12.]
+  #     lookat: [0., 0., 5.]
   lissajous_fancy_no_wind:
     env:
       max_episode_length: 1500
@@ -117,17 +117,17 @@ major_eval_configs:
     task:
       traj_type: 'lissajous_fancy'
       wind: false
-  lissajous_fancy_no_wind_alt_view:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'lissajous_fancy'
-      wind: false   
-    viewer:
-      resolution: [960, 720]
-      eye: [8, 8., 12.]
-      lookat: [0., 0., 5.]
+  # lissajous_fancy_no_wind_alt_view:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'lissajous_fancy'
+  #     wind: false   
+  #   viewer:
+  #     resolution: [960, 720]
+  #     eye: [8, 8., 12.]
+  #     lookat: [0., 0., 5.]
   lissajous_fancy_with_wind:
     env:
       max_episode_length: 1500    
@@ -135,17 +135,31 @@ major_eval_configs:
     task:
       traj_type: 'lissajous_fancy'
       wind: true
-  lissajous_fancy_with_wind_alt_view:
-    env:
-      max_episode_length: 1500  
-      num_envs: 1
-    task:
-      traj_type: 'lissajous_fancy'
-      wind: true
-    viewer:
-      resolution: [960, 720]
-      eye: [8, 8., 12.]
-      lookat: [0., 0., 5.]
+  # lissajous_fancy_with_wind_alt_view:
+  #   env:
+  #     max_episode_length: 1500  
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'lissajous_fancy'
+  #     wind: true
+  #   viewer:
+  #     resolution: [960, 720]
+  #     eye: [8, 8., 12.]
+  #     lookat: [0., 0., 5.]
+  # random_no_wind:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 2048
+  #   task:
+  #     traj_type: 'random_lissajous'
+  #     wind: false
+  # random_wind:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 2048
+  #   task:
+  #     traj_type: 'random_lissajous'
+  #     wind: true
 
 defaults:
   - task: TrackSimpleFlight
