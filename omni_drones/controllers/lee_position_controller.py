@@ -114,7 +114,7 @@ class LeePositionController(ControllerBase):
         )
         self.requires_grad_(False)
 
-    def compute(
+    def forward(
         self,
         root_state: torch.Tensor,
         target_pos: torch.Tensor=None,
@@ -152,7 +152,6 @@ class LeePositionController(ControllerBase):
             target_yaw.reshape(-1, 1),
             body_rate
         )
-
         return cmd.reshape(*batch_shape, -1)
 
     def _compute(self, root_state, target_pos, target_vel, target_acc, target_yaw, body_rate):
