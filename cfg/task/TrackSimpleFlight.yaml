@@ -12,10 +12,13 @@ env:
 drone_model:
   name: Hummingbird
   controller: LeePositionController #RateController
+controller_transform: PositionController
+action_transform: null
+
 
 time_encoding: true
 intrinsics: false
-wind: false
+wind: true
 
 reset_thres: 1.5
 future_traj_steps: 4
@@ -32,4 +35,3 @@ reward_distance_exp: 1.6
 reward_spin_weight: 1.
 reward_up_weight: 1.
 
-action_transform: null
