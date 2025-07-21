@@ -301,8 +301,14 @@ class TrackSimpleFlight(IsaacEnv):
             "reward_action_smoothness": UnboundedContinuousTensorSpec(1),
             "reward_effort": UnboundedContinuousTensorSpec(1),
         }).expand(self.num_envs).to(self.device)
+        info_spec = CompositeSpec({
+            "drone_state": UnboundedContinuousTensorSpec((1, drone_state_dim)),
+            # "prev_action": self.drone.action_spec.unsqueeze(0),
+        }).expand(self.num_envs).to(self.device)
         self.observation_spec["stats"] = stats_spec
+        self.observation_spec["info"] = info_spec
         self.stats = stats_spec.zero()
+        self.info = info_spec.zero()
 
         traj_spec = CompositeSpec({
             "state": UnboundedContinuousTensorSpec((1, drone_state_dim)),
@@ -378,6 +384,7 @@ class TrackSimpleFlight(IsaacEnv):
 
     def _compute_state_and_obs(self):
         self.drone_state = self.drone.get_state()
+        self.info["drone_state"] = self.drone_state
 
         self.target_pos[:] = self._compute_traj(self.future_traj_steps, step_size=5)
 
@@ -402,6 +409,7 @@ class TrackSimpleFlight(IsaacEnv):
                     "observation": obs,
                 },
                 "stats": self.stats.clone(),
+                "info": self.info.clone(),
                 "traj_stats": self.traj_stats.clone(),
             },
             self.batch_size,
