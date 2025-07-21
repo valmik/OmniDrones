@@ -202,7 +202,7 @@ def create_env(cfg):
         transform = ravel_composite(base_env.observation_spec, ("agents", "observation_central"))
         transforms.append(transform)
 
-    # optionally discretize the action space or use a controller
+    # optionally discretize the action space or use some other transform
     action_transform: str = cfg.task.get("action_transform", None)
     if action_transform is not None:
         if action_transform.startswith("multidiscrete"):
@@ -215,6 +215,14 @@ def create_env(cfg):
             transforms.append(transform)
         else:
             raise NotImplementedError(f"Unknown action transform: {action_transform}")
+        
+    # optionally use a controller transform
+    controller_transform = cfg.task.get("controller_transform", None)
+    if controller_transform is not None:
+        from omni_drones.utils.torchrl.transforms import ControllerWrapper
+        controller_cls = ControllerWrapper.REGISTRY[controller_transform]
+        controller_transform = controller_cls(base_env.controller).to(base_env.device)
+        transforms.append(controller_transform)
 
     env = TransformedEnv(base_env, Compose(*transforms)).train()
     env.set_seed(cfg.seed)
