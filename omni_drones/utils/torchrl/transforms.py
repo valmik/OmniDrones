@@ -251,7 +251,7 @@ class PositionController(ControllerWrapper):
         target_pos, target_vel, target_yaw = action.split([3, 3, 1], -1)
         cmds = self.controller(
             drone_state, 
-            target_pos=target_pos + drone_state[..., :3],
+            target_pos=target_pos + drone_state[..., :3], # we should send relative position
             target_vel=target_vel, 
             target_yaw=target_yaw*torch.pi
         )
