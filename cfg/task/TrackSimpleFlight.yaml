@@ -11,8 +11,8 @@ env:
 
 drone_model:
   name: Hummingbird
-  controller: LeePositionController #RateController
-controller_transform: PositionController
+  controller: RateController #LeePositionController #RateController
+controller_transform: RateController
 action_transform: null
 
 
