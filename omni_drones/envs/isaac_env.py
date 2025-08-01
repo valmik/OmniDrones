@@ -373,7 +373,15 @@ class IsaacEnv(EnvBase):
             # convert to numpy array
             rgb_data = np.frombuffer(rgb_data, dtype=np.uint8).reshape(*rgb_data.shape)
             # return the rgb data
-            return rgb_data[:, :, :3]
+
+            if rgb_data is None or len(rgb_data) == 0:
+                return None
+
+            if rgb_data.ndim == 3:
+                return rgb_data[:, :, :3]
+            else:
+                raise ValueError("RGB data has unexpected shape: {}".format(rgb_data.shape))
+
         else:
             raise NotImplementedError(
                 f"Render mode '{mode}' is not supported. Please use: {self.metadata['render.modes']}."

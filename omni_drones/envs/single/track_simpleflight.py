@@ -34,11 +34,11 @@ from omni_drones.robots.drone import MultirotorBase
 from tensordict.tensordict import TensorDict, TensorDictBase
 from torchrl.data import UnboundedContinuousTensorSpec, CompositeSpec, DiscreteTensorSpec
 
-from omni.isaac.debug_draw import _debug_draw
-from omni.isaac.lab.markers import VisualizationMarkers, VisualizationMarkersCfg
-import omni.isaac.lab.sim as sim_utils
-from omni.isaac.lab.utils.math import quat_from_matrix
-from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+from isaacsim.util.debug_draw import _debug_draw
+from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
+import isaaclab.sim as sim_utils
+from isaaclab.utils.math import quat_from_matrix
+from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.kit.viewport.utility import get_active_viewport_window
 
 

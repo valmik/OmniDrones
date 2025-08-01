@@ -31,6 +31,10 @@ CONFIG_PATH = os.path.join(os.path.dirname(__file__), os.path.pardir, "cfg")
 
 
 def init_simulation_app(cfg):
+
+    # No display in headless mode, which avoids the xcb error
+    if cfg["headless"]:
+        os.environ["DISPLAY"] = ""
     # launch the simulator
     config = {"headless": cfg["headless"], "anti_aliasing": 1}
     # load cheaper kit config in headless
@@ -42,7 +46,23 @@ def init_simulation_app(cfg):
     app_experience = ""
     simulation_app = SimulationApp(config, experience=app_experience)
     # simulation_app = SimulationApp(config)
+
+
+    # Add Isaac assets to the asset registry
+    add_isaac_assets()
+
+
     return simulation_app
+
+def add_isaac_assets():
+    import carb
+    settings = carb.settings.get_settings()
+
+    cloud_asset_root = "https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/4.5"
+    settings.set("/persistent/isaac/asset_root/default", cloud_asset_root)
+    
+    # Also set the cloud setting (backup)
+    settings.set("/persistent/isaac/asset_root/cloud", cloud_asset_root)
 
 
 def _get_shapes(self: TensorDict):

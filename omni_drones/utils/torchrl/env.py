@@ -93,7 +93,8 @@ class RenderCallback:
     def __call__(self, env, *args):
         if self.i % self.interval == 0:
             frame = env.render(mode="rgb_array")
-            self.frames.append(frame)
+            if frame is not None:
+                self.frames.append(frame)
             self.t.update(self.interval)
         self.i += 1
         return self.i
