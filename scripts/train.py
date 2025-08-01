@@ -142,6 +142,15 @@ def run_training_segment(
 
         info.update(policy.train_op(data.to_tensordict()))
 
+        # More frequent memory cleanup for Isaac Sim 4.5
+        if i % 10 == 0:  # Every 10 iterations
+            try:
+                torch.cuda.empty_cache()
+                import gc
+                gc.collect()
+            except Exception as e:
+                logging.warning(f"Error during memory cleanup: {e}")
+
         if eval_interval > 0 and (i + start_iteration) % eval_interval == 0 and (i + start_iteration) > 0:
 
             try:
