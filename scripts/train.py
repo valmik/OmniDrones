@@ -161,7 +161,6 @@ def run_training_segment(
 
             eval_info, traj_data = evaluate_current_env(env_manager, policy, cfg.seed, ExplorationType.MODE, render=render_during_minor_eval)
             info.update(eval_info)
-            save_traj_data(traj_data, "training", cfg.seed, start_frame + collector._frames, hydra_dir)
        
         if save_interval > 0 and (i + start_iteration) % save_interval == 0 and (i + start_iteration) > 0:
             try:
