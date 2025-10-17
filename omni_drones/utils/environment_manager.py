@@ -54,27 +54,49 @@ class EvalEnvironmentManager:
         # Clear the scene and robot registry
         self._clear_scene()
 
-        # Create new environment
-        try:
-            env, base_env = self.env_creator(eval_cfg)
-            
-            self.current_env = env
-            self.current_base_env = base_env
-            self.current_env_name = eval_name
+        # Create new environment with retry logic for CUDA errors
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                env, base_env = self.env_creator(eval_cfg)
+                
+                self.current_env = env
+                self.current_base_env = base_env
+                self.current_env_name = eval_name
 
-            for i in range(10):
-                try:
-                    env.reset()
-                    base_env.sim.step(render=False)
-                except:
-                    pass
-            
-            logging.info(f"Successfully created eval environment: {eval_name}")
-            return env, base_env
-            
-        except Exception as e:
-            logging.error(f"Failed to create eval environment {eval_name}: {e}")
-            raise
+                for i in range(10):
+                    try:
+                        env.reset()
+                        base_env.sim.step(render=False)
+                    except:
+                        pass
+                
+                logging.info(f"Successfully created eval environment: {eval_name}")
+                return env, base_env
+                
+            except RuntimeError as e:
+                if "CUDA error" in str(e) and attempt < max_retries - 1:
+                    logging.warning(f"CUDA error on attempt {attempt + 1}/{max_retries}: {e}")
+                    logging.info("Attempting CUDA context reset and retry...")
+                    
+                    # Reset CUDA context
+                    try:
+                        torch.cuda.synchronize()
+                        torch.cuda.empty_cache()
+                        # Force garbage collection
+                        import gc
+                        gc.collect()
+                        time.sleep(5.0)  # Give time for cleanup
+                    except Exception as cleanup_e:
+                        logging.warning(f"Error during CUDA reset: {cleanup_e}")
+                    
+                    continue
+                else:
+                    logging.error(f"Failed to create eval environment {eval_name} after {max_retries} attempts: {e}")
+                    raise
+            except Exception as e:
+                logging.error(f"Failed to create eval environment {eval_name}: {e}")
+                raise
     
     def _cleanup_current_env(self):
         """Clean up the current environment."""
@@ -88,6 +110,7 @@ class EvalEnvironmentManager:
             
         # Clear CUDA cache before scene cleanup
         try:
+            torch.cuda.synchronize()  # Wait for all CUDA operations to complete
             torch.cuda.empty_cache()
             logging.info("CUDA cache cleared")
         except Exception as e:
@@ -121,6 +144,10 @@ class EvalEnvironmentManager:
 
             # Clear the stage
             omni.usd.get_context().new_stage()
+            
+            # Synchronize CUDA after scene clearing to ensure all operations complete
+            torch.cuda.synchronize()
+            torch.cuda.empty_cache()
             
             logging.info("Scene cleared successfully")
             
