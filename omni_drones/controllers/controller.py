@@ -24,3 +24,20 @@ class ControllerBase(nn.Module):
     @abc.abstractmethod
     def process_rl_actions(self, actions) -> torch.Tensor:
         ...
+
+    @property
+    def device(self) -> torch.device:
+        """Return the device where this module's parameters live.
+
+        This mirrors common practice in PyTorch where moving a module with
+        ``.to(device)`` migrates parameters/buffers but doesn't set an explicit
+        ``.device`` attribute. Providing this property ensures downstream code
+        can reliably query the controller's device.
+        """
+        try:
+            return next(self.parameters()).device
+        except StopIteration:
+            # Fallback if the module has no parameters: check buffers or default to CPU
+            for buffer in self.buffers():
+                return buffer.device
+            return torch.device("cpu")
