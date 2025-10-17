@@ -152,7 +152,7 @@ def run_training_segment(
 
             eval_info, traj_data = evaluate_current_env(env_manager, policy, cfg.seed, ExplorationType.MODE, render=render_during_minor_eval)
             info.update(eval_info)
-            save_traj_data(traj_data, "training", cfg.seed, start_frame + collector._frames, hydra_dir)
+            # save_traj_data(traj_data, "training", cfg.seed, start_frame + collector._frames, hydra_dir) ### USES TOO MUCH SPACE
        
         if save_interval > 0 and (i + start_iteration) % save_interval == 0 and (i + start_iteration) > 0:
             try:
@@ -221,7 +221,7 @@ def create_env(cfg):
     if controller_transform is not None:
         from omni_drones.utils.torchrl.transforms import ControllerWrapper
         controller_cls = ControllerWrapper.REGISTRY[controller_transform]
-        controller_transform = controller_cls(base_env.controller).to(base_env.device)
+        controller_transform = controller_cls(base_env.controller, cfg).to(base_env.device)
         transforms.append(controller_transform)
 
     env = TransformedEnv(base_env, Compose(*transforms)).train()
@@ -260,6 +260,25 @@ def main(cfg):
         )
     except KeyError:
         raise NotImplementedError(f"Unknown algorithm: {cfg.algo.name}")
+
+
+    ## Account for action scaling
+    def set_actor_log_std(policy, log_std_vec: torch.Tensor):
+        with torch.no_grad():
+            for m in policy.actor.modules():
+                if hasattr(m, "actor_std") and isinstance(m.actor_std, torch.nn.Parameter):
+                    m.actor_std.copy_(log_std_vec.to(m.actor_std.device))
+                    return
+
+    init_action_std = None
+    for t in getattr(env.transform, "transforms", []):
+        if hasattr(t, "init_action_std"):
+            init_action_std = t.init_action_std.clamp_min(1e-8)
+            break
+
+    if init_action_std is not None:
+        set_actor_log_std(policy, init_action_std.log())
+    
 
     frames_per_batch = env.num_envs * int(cfg.algo.train_every)
     total_frames = cfg.get("total_frames", -1) // frames_per_batch * frames_per_batch
