@@ -313,7 +313,9 @@ class TrackSimpleFlight(IsaacEnv):
         traj_spec = CompositeSpec({
             "state": UnboundedContinuousTensorSpec((1, drone_state_dim)),
             "target_position": UnboundedContinuousTensorSpec((1, 3)),
+            "future_targets": UnboundedContinuousTensorSpec((1, self.future_traj_steps, 3)),
             "time": UnboundedContinuousTensorSpec(1),
+            "future_times": UnboundedContinuousTensorSpec((1, self.future_traj_steps)),
             "wind_acceleration": UnboundedContinuousTensorSpec((3,)),
         }).expand(self.num_envs).to(self.device)
         self.observation_spec["traj_stats"] = traj_spec
@@ -332,7 +334,7 @@ class TrackSimpleFlight(IsaacEnv):
             self.ref_style_seq[env_ids] = torch.zeros(len(env_ids), dtype=torch.long, device=self.device)
             rot = euler_to_quaternion(self.eval_init_rpy_dist.sample(env_ids.shape))
 
-        pos = self._compute_traj(2)
+        pos, _ = self._compute_traj(2)
         pos = pos[env_ids, 0, :]
         vel = torch.zeros(len(env_ids), 1, 6, device=self.device)
         self.drone.set_world_poses(
@@ -346,7 +348,8 @@ class TrackSimpleFlight(IsaacEnv):
             # visualize the trajectory
             self.draw.clear_lines()
 
-            traj_vis = self._compute_traj(self.max_episode_length, self.central_env_idx.unsqueeze(0))[0]
+            traj_vis, _ = self._compute_traj(self.max_episode_length, self.central_env_idx.unsqueeze(0))
+            traj_vis = traj_vis[0]
             traj_vis = traj_vis + self.envs_positions[self.central_env_idx]
             point_list_0 = traj_vis[:-1].tolist()
             point_list_1 = traj_vis[1:].tolist()
@@ -386,7 +389,7 @@ class TrackSimpleFlight(IsaacEnv):
         self.drone_state = self.drone.get_state()
         self.info["drone_state"] = self.drone_state
 
-        self.target_pos[:] = self._compute_traj(self.future_traj_steps, step_size=5)
+        self.target_pos[:], self.future_times = self._compute_traj(self.future_traj_steps, step_size=1)
 
         self.rpos = self.target_pos - self.drone_state[..., :3]
         obs = [
@@ -423,6 +426,8 @@ class TrackSimpleFlight(IsaacEnv):
 
         self.traj_stats["state"].copy_(self.drone_state)
         self.traj_stats["target_position"].copy_(self.target_pos[:, [0]])
+        self.traj_stats["future_targets"].copy_(self.target_pos.unsqueeze(1))
+        self.traj_stats["future_times"].copy_(self.future_times.unsqueeze(1))
         if self.wind:
             self.traj_stats["wind_acceleration"].copy_(self.wind_force)
         else:
@@ -524,7 +529,7 @@ class TrackSimpleFlight(IsaacEnv):
             t = traj_t0.unsqueeze(1) + t * self.dt
             target_pos = sum(one_hot[:, i].unsqueeze(-1).unsqueeze(-1) * self.ref[i].batch_pos(t) for i in range(len(self.ref)))
 
-        return target_pos
+        return target_pos, t
     
     def _update_vapor_trail(self):
         pos = self.drone.pos[self.central_env_idx].squeeze()
