@@ -11,7 +11,7 @@ headless: true
 sim: ${task.sim}
 env: ${task.env}
 
-total_frames: 300_000_000
+total_frames: 200_000_000
 max_iters: -1
 eval_interval: 100
 major_eval_interval: 500
@@ -21,17 +21,17 @@ render_during_minor_eval: true
 render_during_major_eval: true
 
 viewer:
-  resolution: [960, 720]
+  resolution: [640, 480]
   eye: [8, 0., 12.]
   lookat: [0., 0., 5.]
 
 wandb:
   group: ${oc.select:..task.name}
   # run_name: ${oc.select:..task.name,test}-${oc.select:..algo.name,none}-TRAIN
-  run_name: rate-controller # ${oc.select:..task.drone_model.controller}-${oc.select:..algo.name,none}-windis-${oc.select:..task.wind,false}-TRAIN
+  run_name: gc-no-ff # ${oc.select:..task.drone_model.controller}-${oc.select:..algo.name,none}-windis-${oc.select:..task.wind,false}-TRAIN
   job_type: train
   entity: valmikp-rl
-  project: test # quadrotor-geometric-performance
+  project: quadrotor-hybrid-control # quadrotor-geometric-performance
   mode: online # set to 'disabled' when debugging locally
   run_id:
   monitor_gym: True
