@@ -27,7 +27,7 @@ from torchrl.data import BoundedTensorSpec, UnboundedContinuousTensorSpec
 from omni_drones.robots.drone import MultirotorBase
 from omni_drones.robots.robot import ASSET_PATH
 
-class Omav(MultirotorBase):
+class Tiltrotor(MultirotorBase):
 
     usd_path: str = ASSET_PATH + "/usd/tiltrotor.usd"
     param_path: str = ASSET_PATH + "/usd/tiltrotor.yaml"
