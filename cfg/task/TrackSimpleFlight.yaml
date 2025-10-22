@@ -11,8 +11,8 @@ env:
 
 drone_model:
   name: Hummingbird
-  controller: RateController #LeePositionController #RateController
-controller_transform: RateController
+  controller: LeePositionController #LeePositionController #RateController
+controller_transform: OnlyPosControllerNoFF
 action_transform: null
 
 
@@ -21,7 +21,7 @@ intrinsics: false
 wind: true
 
 reset_thres: 2.0
-future_traj_steps: 4
+future_traj_steps: 20
 
 traj_type: ['poly', 'zigzag'] # poly, zigzag, pentagram, slow, normal, fast, lissajous, lissajous_fancy, constant
 
@@ -34,4 +34,17 @@ reward_distance_scale: 5.
 reward_distance_exp: 1.6
 reward_spin_weight: 1.
 reward_up_weight: 1.
+
+neural_pos_scale: 1.0
+neural_yaw_scale: 3.14159
+neural_vel_scale: 3.0
+neural_acc_scale: 10.0
+neural_body_rate_scale: 3.14159
+
+# These are in physical units
+init_pos_std: 0.1 # m
+init_vel_std: 0.5 # m/s
+init_acc_std: 1.0 # m/s^2
+init_yaw_std: 1.0 # rad
+init_body_rate_std: 1.0 # rad/s
 
