@@ -42,3 +42,50 @@ class Lemniscate():
         # Ensure origin has correct shape for broadcasting
         origin = self.origin.view(1, 1, -1).expand(x.shape[0], x.shape[1], -1)
         return (x + origin).to(self.device)
+
+    def vel(self, t: torch.Tensor):
+
+        amp = 2 * torch.pi / self.T
+        
+        v = torch.stack([
+            -amp * torch.sin(amp * t), 
+            amp * torch.cos(2 * amp * t), 
+            amp * torch.cos(2 * amp * t)
+        ], dim=-1)
+        
+        return v.to(self.device)
+
+    def acc(self, t: torch.Tensor):
+        
+        amp = 2 * torch.pi / self.T
+
+        acc = torch.stack([
+            -amp**2 * torch.cos(amp * t),
+            -2 * amp**2 * torch.sin(2 * amp * t),
+            -2 * amp**2 * torch.sin(2 * amp * t)
+        ], dim=-1)
+        
+        return acc.to(self.device)
+
+    def jerk(self, t: torch.Tensor):
+
+        amp = 2 * torch.pi / self.T
+
+        jerk = torch.stack([
+            amp**3 * torch.sin(amp * t),
+            -4 * amp**3 * torch.cos(2 * amp * t),
+            -4 * amp**3 * torch.cos(2 * amp * t)
+        ], dim=-1)
+        
+        return jerk.to(self.device)
+
+    def snap(self, t: torch.Tensor):
+        amp = 2 * torch.pi / self.T
+
+        snap = torch.stack([
+            amp**4 * torch.cos(amp * t),
+            8 * amp**4 * torch.sin(2 * amp * t),
+            8 * amp**4 * torch.sin(2 * amp * t)
+        ], dim=-1)
+        
+        return snap.to(self.device)

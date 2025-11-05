@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Optional, Tuple
 
-class RandomLissajous:
+class RandomLissajous():
     def __init__(self, 
                  num_trajs: int,
                  T: float = 2.0,
