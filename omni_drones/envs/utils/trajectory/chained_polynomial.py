@@ -1,14 +1,30 @@
 from typing import List, Union
+import importlib.util
+from pathlib import Path
 
 import torch
+
+# Import BaseTrajectory directly without triggering package __init__.py
 try:
     from .base import BaseTrajectory
-except:
-    from omni_drones.envs.utils.trajectory.base import BaseTrajectory
+except ImportError:
+    # Use importlib to load the module directly without initializing parent packages
+    base_path = Path(__file__).parent / "base.py"
+    spec = importlib.util.spec_from_file_location("base", base_path)
+    base_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(base_module)
+    BaseTrajectory = base_module.BaseTrajectory
+
+# Import math_utils directly
 try:
     from ...utils import math_utils as mu 
-except:
-    import omni_drones.envs.utils.math_utils as mu
+except ImportError:
+    # Use importlib to load the module directly without initializing parent packages
+    utils_path = Path(__file__).parent.parent / "math_utils.py"
+    spec = importlib.util.spec_from_file_location("math_utils", utils_path)
+    math_utils_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(math_utils_module)
+    mu = math_utils_module
 
 
 class ChainedPolynomial(BaseTrajectory):
@@ -372,5 +388,9 @@ if __name__ == "__main__":
         axs[i,4].plot(t[plot_idx], snap[plot_idx, :,i])
         axs[i,4].set_xlabel('t')
         axs[i,4].set_ylabel('s')
+    quantity_names = ['Position', 'Velocity', 'Acceleration', 'Jerk', 'Snap']
+    for i in range(len(quantity_names)):
+        axs[0,i].set_title(f'{quantity_names[i]}')
+
     plt.tight_layout()
     plt.savefig(f'chainedpoly_xyz-{datetime}.png')

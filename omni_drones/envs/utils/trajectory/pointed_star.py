@@ -3,11 +3,18 @@ from typing import List, Union
 import numpy as np
 import torch
 from omegaconf import ListConfig
+import importlib.util
+from pathlib import Path
+
 try:
     from .base import BaseTrajectory
-except:
-    from base import BaseTrajectory
-
+except ImportError:
+    # Use importlib to load the module directly without initializing parent packages
+    base_path = Path(__file__).parent / "base.py"
+    spec = importlib.util.spec_from_file_location("base", base_path)
+    base_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(base_module)
+    BaseTrajectory = base_module.BaseTrajectory
 
 class NPointedStar(BaseTrajectory):
     def __init__(self, 

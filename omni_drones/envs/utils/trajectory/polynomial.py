@@ -1,14 +1,28 @@
 from typing import List, Union
 
 import torch
+import importlib.util
+from pathlib import Path
+
 try:
     from .base import BaseTrajectory
-except:
-    from base import BaseTrajectory
+except ImportError:
+    # Use importlib to load the module directly without initializing parent packages
+    base_path = Path(__file__).parent / "base.py"
+    spec = importlib.util.spec_from_file_location("base", base_path)
+    base_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(base_module)
+    BaseTrajectory = base_module.BaseTrajectory
 try:
-    import math_utils as mu
-except:
     from ...utils import math_utils as mu 
+except ImportError:
+    # Use importlib to load the module directly without initializing parent packages
+    utils_path = Path(__file__).parent.parent / "math_utils.py"
+    spec = importlib.util.spec_from_file_location("math_utils", utils_path)
+    math_utils_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(math_utils_module)
+    mu = math_utils_module
+
     
 class Polynomial(BaseTrajectory):
     def __init__(self,
