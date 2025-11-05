@@ -6,3 +6,4 @@ from .lemniscate import Lemniscate
 from .lissajous import Lissajous
 from .constant import Constant
 from .random_lissajous import RandomLissajous
+from .slalom import Slalom
