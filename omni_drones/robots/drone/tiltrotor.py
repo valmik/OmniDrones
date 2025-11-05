@@ -32,14 +32,18 @@ class Tiltrotor(MultirotorBase):
     usd_path: str = ASSET_PATH + "/usd/tiltrotor.usd"
     param_path: str = ASSET_PATH + "/usd/tiltrotor.yaml"
 
-    def __init__(self, name: str = "Tiltrotor", cfg=None) -> None:
+    def __init__(
+        self,
+        name: str = "Tiltrotor",
+        cfg=None,
+        is_articulation: bool = True,
+    ) -> None:
         super().__init__(name, cfg)
-        self.action_spec = BoundedTensorSpec(-1, 1, 4 + 4, device=self.device)
         self.tilt_dof_indices = torch.arange(0, 4, device=self.device)
         self.rotor_dof_indices = torch.arange(4, 8, device=self.device)
-        self.max_tilt_velocity = 10
+        self.max_tilt_velocity = 3 # No load velocity for a dynamixel is 4.8 rad/s
 
-        self.action_spec = BoundedTensorSpec(-1, 1, self.num_rotors + 4, device=self.device)
+        self._action_spec = BoundedTensorSpec(-1, 1, self.num_rotors + 4, device=self.device)
         self.state_spec = UnboundedContinuousTensorSpec(
             19 + self.num_rotors + 8, device=self.device
         )
