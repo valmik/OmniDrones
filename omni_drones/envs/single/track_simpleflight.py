@@ -44,7 +44,7 @@ from omni.kit.viewport.utility import get_active_viewport_window
 
 
 import omegaconf
-from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous, Constant, RandomLissajous
+from ..utils.trajectory import ChainedPolynomial, RandomZigzag, NPointedStar, Lemniscate, Lissajous, Constant, RandomLissajous, Slalom
 
 class TrackSimpleFlight(IsaacEnv):
     r"""
@@ -109,6 +109,7 @@ class TrackSimpleFlight(IsaacEnv):
         assert self.future_traj_steps > 0
         self.intrinsics = cfg.task.intrinsics
         self.wind = cfg.task.wind
+        self.wind_intensity = cfg.task.get("wind_intensity", 2.0)
 
         self.traj_type = cfg.task.traj_type
 
@@ -130,13 +131,17 @@ class TrackSimpleFlight(IsaacEnv):
                     self.wind_intensity_high = wind_intensity_scale[1]
             else:
                 self.wind_intensity_low = 0
-                self.wind_intensity_high = 2
+                self.wind_intensity_high = self.wind_intensity
             self.wind_w = torch.zeros(self.num_envs, 3, 8, device=self.device)
             self.wind_i = torch.zeros(self.num_envs, 1, device=self.device)
 
         self.training_init_rpy_dist = D.Uniform(
-            torch.tensor([-.2, -.2, 0.], device=self.device) * torch.pi,
-            torch.tensor([0.2, 0.2, 2.], device=self.device) * torch.pi
+            torch.tensor([-0.2, -0.2, -1.0], device=self.device) * torch.pi,
+            torch.tensor([0.2, 0.2, 1.0], device=self.device) * torch.pi
+        )
+        self.training_init_pos_dist = D.Uniform(
+            torch.tensor([-1.0, -1.0, -1.0], device=self.device),
+            torch.tensor([1.0, 1.0, 1.0], device=self.device)
         )
         self.origin = torch.tensor([0., 0., 5], device=self.device)
 
@@ -148,8 +153,12 @@ class TrackSimpleFlight(IsaacEnv):
         self.ref_style_seq = torch.randint(0, len(self.ref), (self.num_envs,)).to(self.device)
         
         self.eval_init_rpy_dist = D.Uniform(
-            torch.tensor([-.0, -.0, 0.], device=self.device) * torch.pi,
+            torch.tensor([-0., -0., 0.], device=self.device) * torch.pi,
             torch.tensor([0., 0., 0.], device=self.device) * torch.pi
+        )
+        self.eval_init_pos_dist = D.Uniform(
+            torch.tensor([-0., -0., -0.], device=self.device),
+            torch.tensor([0., 0., 0.], device=self.device)
         )
 
         self.target_pos = torch.zeros(self.num_envs, self.future_traj_steps, 3, device=self.device)
@@ -231,6 +240,8 @@ class TrackSimpleFlight(IsaacEnv):
             ref = Lissajous(origin=self.origin, device=self.device)
         elif traj_name == 'lissajous_fancy':
             ref = Lissajous(T = 3.0,origin=self.origin, device=self.device, ax=3, ay=2, az=2, fx=0.5, fy=1.0, fz=1.0, del_y=0.5)
+        elif traj_name == 'slalom':
+            ref = Slalom(origin=self.origin, device=self.device)
         elif traj_name == 'constant':
             ref = Constant(pose=[1.0, 2.0, 3.0], origin=self.origin, device=self.device)
         else:
@@ -330,15 +341,16 @@ class TrackSimpleFlight(IsaacEnv):
         if self.training:
             self.ref_style_seq[env_ids] = torch.randint(0, len(self.ref), (len(env_ids),)).to(self.device)
             rot = euler_to_quaternion(self.training_init_rpy_dist.sample(env_ids.shape))
+            pos_add = self.training_init_pos_dist.sample(env_ids.shape)
         else:
             self.ref_style_seq[env_ids] = torch.zeros(len(env_ids), dtype=torch.long, device=self.device)
             rot = euler_to_quaternion(self.eval_init_rpy_dist.sample(env_ids.shape))
-
+            pos_add = self.eval_init_pos_dist.sample(env_ids.shape)
         pos, _ = self._compute_traj(2)
         pos = pos[env_ids, 0, :]
         vel = torch.zeros(len(env_ids), 1, 6, device=self.device)
         self.drone.set_world_poses(
-            pos + self.envs_positions[env_ids], rot, env_ids
+            pos + self.envs_positions[env_ids] + pos_add, rot, env_ids
         )
         self.drone.set_velocities(vel, env_ids)
 
@@ -518,9 +530,10 @@ class TrackSimpleFlight(IsaacEnv):
             t = self.traj_t0[0] + t * self.dt
             target_pos = self.ref[0].batch_pos(t)
         elif len(self.ref) == 2:
-            t = self.traj_t0[0] + t * self.dt
-            pos_1 = self.ref[0].batch_pos(t)
-            pos_2 = self.ref[1].batch_pos(t)
+            t_1 = self.traj_t0[0] + t * self.dt
+            pos_1 = self.ref[0].batch_pos(t_1)
+            t_2 = self.traj_t0[1] + t * self.dt
+            pos_2 = self.ref[1].batch_pos(t_2)
             target_pos = pos_1 * (1 - self.ref_style_seq[env_ids].unsqueeze(1).unsqueeze(1)) + pos_2 * self.ref_style_seq[env_ids].unsqueeze(1).unsqueeze(1)
         else:
             one_hot = torch.nn.functional.one_hot(self.ref_style_seq[env_ids], len(self.ref)).float()
