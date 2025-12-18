@@ -1,0 +1,30 @@
+# hydra.job.chdir: false
+hydra:
+  searchpath:
+    # see https://hydra.cc/docs/advanced/search_path/
+    - file://../cfg
+  run:
+    dir: outputs/tune_lee_controller/${task.name}/${now:%Y-%m-%d_%H-%M-%S}
+
+headless: true
+
+sim: ${task.sim}
+env: ${task.env}
+
+seed: 0
+
+num_trials: 250
+episode_steps: 500
+
+checkpoint_path: null
+
+viewer:
+  resolution: [640, 480]
+  eye: [8, 0., 12.]
+  lookat: [0., 0., 5.]
+
+defaults:
+  - task: TrackSimpleFlight
+  - algo: dummy
+  - _self_
+
