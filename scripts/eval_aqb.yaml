@@ -1,0 +1,51 @@
+# hydra.job.chdir: false
+hydra:
+  searchpath:
+    # see https://hydra.cc/docs/advanced/search_path/
+    - file://../cfg
+  run:
+    dir: outputs/${wandb.project}/${wandb.group}/${wandb.run_name}/${now:%Y-%m-%d_%H-%M-%S}
+
+sim: ${task.sim}
+env: ${task.env}
+
+# Must be set to path of saved model
+checkpoint_path: /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/outputs/tiltrotor-test/TrackSimpleFlight/end-to-end-no-time-encoding-quad/2025-12-14_21-42-00/checkpoint_199901184.pt
+# /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/outputs/quadrotor-geometric-performance/TrackSimpleFlight/LeePositionController-ppo-windis-True-TRAIN/2025-06-19_01-03-26/checkpoint_45060096.pt
+# checkpoint_path: /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/outputs/quadrotor-geometric-performance/TrackSimpleFlight/LeePositionController-ppo-windis-False-TRAIN/2025-06-19_14-19-10/checkpoint_36868096.pt
+headless: true
+
+seed: 0
+
+aqb_args:
+  controller: ['omnidrone']
+  experiment: 'no'
+  num_trials: 100
+  seed: 42
+  save_trials: False
+  serial: True
+  vis: False
+  when2fail: False
+
+viewer:
+  resolution: [960, 720]
+  eye: [8, 0., 12.]
+  lookat: [0., 0., 5.]
+
+wandb:
+  group: bullshit
+  # run_name: ${oc.select:..task.name,test}-${oc.select:..algo.name,none}-EVAL
+  run_name: bullshit
+  job_type: eval_aqb
+  entity: valmikp-rl
+  project: bullshit
+  mode: disabled # set to 'disabled' when debugging locally
+  run_id:
+  monitor_gym: True
+  tags:
+
+
+defaults:
+  - task: TrackSimpleFlight
+  - algo: ppo
+  - _self_
