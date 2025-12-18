@@ -280,6 +280,18 @@ def main(cfg):
         set_actor_log_std(policy, init_action_std.log())
     
 
+    # Load checkpoint if specified
+    checkpoint_path = cfg.get("checkpoint_path", None)
+    if checkpoint_path is not None:
+        logging.info(f"Loading checkpoint from {checkpoint_path}")
+        try:
+            state_dict = torch.load(checkpoint_path, map_location=base_env.device)
+            policy.load_state_dict(state_dict)
+            logging.info(f"Loaded checkpoint from {checkpoint_path}")
+        except Exception as e:
+            logging.error(f"Error loading checkpoint from {checkpoint_path}: {e}")
+            raise
+
     frames_per_batch = env.num_envs * int(cfg.algo.train_every)
     total_frames = cfg.get("total_frames", -1) // frames_per_batch * frames_per_batch
     max_iters = cfg.get("max_iters", -1)

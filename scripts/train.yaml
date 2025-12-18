@@ -8,13 +8,18 @@ hydra:
 
 headless: true
 
+checkpoint_path: /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/outputs/tiltrotor-test/TrackSimpleFlight/end-to-end-no-time-encoding-quad/2025-12-14_21-42-00/checkpoint_199901184.pt
+# /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/outputs/tiltrotor-test/TrackSimpleFlight/end-to-end-no-time-encoding-quad/2025-12-14_21-42-00/checkpoint_199901184.pt
+# /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/outputs/tiltrotor-test/TrackSimpleFlight/end-to-end-no-time-encoding/2025-12-10_09-49-01/checkpoint_199901184.pt
+# /home/valmik/Documents/Research/drone_rl/OmniDrones/scripts/outputs/quadrotor-hybrid-control/TrackSimpleFlight/end-to-end-no-time-encoding/2025-12-08_18-11-09/checkpoint_145833984.pt 
+
 sim: ${task.sim}
 env: ${task.env}
 
 total_frames: 200_000_000
 max_iters: -1
-eval_interval: 100
-major_eval_interval: 500
+eval_interval: 500
+major_eval_interval: 1000
 save_interval: 100
 seed: 0
 render_during_minor_eval: true
@@ -28,140 +33,96 @@ viewer:
 wandb:
   group: ${oc.select:..task.name}
   # run_name: ${oc.select:..task.name,test}-${oc.select:..algo.name,none}-TRAIN
-  run_name: gc-no-ff # ${oc.select:..task.drone_model.controller}-${oc.select:..algo.name,none}-windis-${oc.select:..task.wind,false}-TRAIN
+  run_name: tilt-as-quad-slalom-fast-new-reward # slalom-fast # hybrid-motor # test-train # ${oc.select:..task.drone_model.controller}-${oc.select:..algo.name,none}-windis-${oc.select:..task.wind,false}-TRAIN
   job_type: train
   entity: valmikp-rl
-  project: quadrotor-hybrid-control # quadrotor-geometric-performance
+  project: slalom-fast # tiltrotor-test # slalom-fast # quadrotor-hybrid-control # tiltrotor-test # quadrotor-hybrid-control
   mode: online # set to 'disabled' when debugging locally
   run_id:
   monitor_gym: True
   tags:
 
 major_eval_configs:
-  lemniscate_no_wind:
+  slalom-short:
     env:
-      max_episode_length: 1500
+      max_episode_length: 600
       num_envs: 1
     task:
-      traj_type: 'normal'
+      traj_type: 'slalom'
       wind: false
-  # lemniscate_no_wind_alt_view:
+    viewer:
+      resolution: [1280, 960]
+  slalom-long:
+    env:
+      max_episode_length: 3000
+      num_envs: 1
+    task:
+      traj_type: 'slalom'
+      wind: false
+    viewer:
+      resolution: [1280, 960]
+  # lemniscate_no_wind:
   #   env:
   #     max_episode_length: 1500
   #     num_envs: 1
   #   task:
   #     traj_type: 'normal'
   #     wind: false
-  #   viewer:
-  #     resolution: [960, 720]
-  #     eye: [8, 8., 12.]
-  #     lookat: [0., 0., 5.]
-  lemniscate_with_wind:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'normal'
-      wind: true
-  # lemniscate_with_wind_alt_view:
+  # lemniscate_with_wind:
   #   env:
   #     max_episode_length: 1500
   #     num_envs: 1
   #   task:
   #     traj_type: 'normal'
-  #     wind: true  
-  #   viewer:
-  #     resolution: [960, 720]
-  #     eye: [8, 8., 12.]
-  #     lookat: [0., 0., 5.]
-  lissajous_no_wind:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'lissajous'
-      wind: false
-  # lissajous_no_wind_alt_view:
+  #     wind: true
+  # lemniscate_with_high_wind:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'normal'
+  #     wind: true
+  #     wind_intensity: 3.0
+  # lemniscate_with_very_high_wind:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'normal'
+  #     wind: true
+  #     wind_intensity: 4.0
+  # lissajous_no_wind:
   #   env:
   #     max_episode_length: 1500
   #     num_envs: 1
   #   task:
   #     traj_type: 'lissajous'
-  #     wind: false   
-  #   viewer:
-  #     resolution: [960, 720]
-  #     eye: [8, 8., 12.]
-  #     lookat: [0., 0., 5.]
-  lissajous_with_wind:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'lissajous'
-      wind: true
-  # lissajous_with_wind_alt_view:
-  #   env:
-  #     max_episode_length: 1500
-  #     num_envs: 1
-  #   task:
-  #     traj_type: 'lissajous'
-  #     wind: true
-  #   viewer:
-  #     resolution: [960, 720]
-  #     eye: [8, 8., 12.]
-  #     lookat: [0., 0., 5.]
-  lissajous_fancy_no_wind:
-    env:
-      max_episode_length: 1500
-      num_envs: 1
-    task:
-      traj_type: 'lissajous_fancy'
-      wind: false
-  # lissajous_fancy_no_wind_alt_view:
-  #   env:
-  #     max_episode_length: 1500
-  #     num_envs: 1
-  #   task:
-  #     traj_type: 'lissajous_fancy'
-  #     wind: false   
-  #   viewer:
-  #     resolution: [960, 720]
-  #     eye: [8, 8., 12.]
-  #     lookat: [0., 0., 5.]
-  lissajous_fancy_with_wind:
-    env:
-      max_episode_length: 1500    
-      num_envs: 1
-    task:
-      traj_type: 'lissajous_fancy'
-      wind: true
-  # lissajous_fancy_with_wind_alt_view:
-  #   env:
-  #     max_episode_length: 1500  
-  #     num_envs: 1
-  #   task:
-  #     traj_type: 'lissajous_fancy'
-  #     wind: true
-  #   viewer:
-  #     resolution: [960, 720]
-  #     eye: [8, 8., 12.]
-  #     lookat: [0., 0., 5.]
-  # random_no_wind:
-  #   env:
-  #     max_episode_length: 1500
-  #     num_envs: 2048
-  #   task:
-  #     traj_type: 'random_lissajous'
   #     wind: false
-  # random_wind:
+  # lissajous_with_wind:
   #   env:
   #     max_episode_length: 1500
-  #     num_envs: 2048
+  #     num_envs: 1
   #   task:
-  #     traj_type: 'random_lissajous'
+  #     traj_type: 'lissajous'
   #     wind: true
+  # lissajous_with_high_wind:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'lissajous'
+  #     wind: true
+  #     wind_intensity: 3.0
+  # lissajous_with_very_high_wind:
+  #   env:
+  #     max_episode_length: 1500
+  #     num_envs: 1
+  #   task:
+  #     traj_type: 'lissajous'
+  #     wind: true
+  #     wind_intensity: 4.0
 
 defaults:
-  - task: TrackSimpleFlight
+  - task: SlalomFast # TrackSimpleFlight
   - algo: ppo
   - _self_
