@@ -27,3 +27,4 @@ from .fly_through import FlyThrough
 from .forest import Forest
 from .pinball import Pinball
 from .track_simpleflight import TrackSimpleFlight
+from .slalom_fast import SlalomFast

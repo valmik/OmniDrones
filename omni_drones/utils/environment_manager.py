@@ -320,6 +320,11 @@ def make_trajectory_plots(traj_data: Dict[str, torch.Tensor], eval_name: str, ce
         target_position = None
 
     try:
+        nominal_target_position = traj_data["nominal_target_position"][central_env_idx, 1:, 0, :3].numpy()  # [time, 3]
+    except Exception as e:
+        nominal_target_position = None
+
+    try:
         time = traj_data["time"][central_env_idx, 1:, 0].numpy()  # [time]
     except Exception as e:
         time = None
@@ -331,11 +336,11 @@ def make_trajectory_plots(traj_data: Dict[str, torch.Tensor], eval_name: str, ce
 
     plot_info = {}
     try:
-        plot_info.update(plot_3d_trajectory(position, target_position, eval_name))
+        plot_info.update(plot_3d_trajectory(position, target_position, nominal_target_position, eval_name))
     except Exception as e:
         logging.error(f"Error plotting 3D trajectory: {e}")
     try:
-        plot_info.update(plot_trajectory_position(position, target_position, time, wind_acceleration, eval_name))
+        plot_info.update(plot_trajectory_position(position, target_position, nominal_target_position, time, wind_acceleration, eval_name))
     except Exception as e:
         logging.error(f"Error plotting position trajectory: {e}")
     try:
@@ -347,7 +352,12 @@ def make_trajectory_plots(traj_data: Dict[str, torch.Tensor], eval_name: str, ce
 
     
 
-def plot_3d_trajectory(position: np.ndarray, target_position: np.ndarray | None, eval_name: str):
+def plot_3d_trajectory(
+    position: np.ndarray, 
+    target_position: np.ndarray | None, 
+    nominal_target_position: np.ndarray | None, 
+    eval_name: str
+    ):
     """Plot the 3D trajectory."""   
     import matplotlib.pyplot as plt
     import wandb
@@ -364,6 +374,10 @@ def plot_3d_trajectory(position: np.ndarray, target_position: np.ndarray | None,
     if target_position is not None:
         ax.plot(target_position[:, 0], target_position[:, 1], target_position[:, 2],
                 label='Target Position', linewidth=2, linestyle='--')
+
+    if nominal_target_position is not None:
+        ax.plot(nominal_target_position[:, 0], nominal_target_position[:, 1], nominal_target_position[:, 2],
+                label='Nominal Target Position', linewidth=2, linestyle='--')
     
     # Add labels and legend
     ax.set_xlabel('X, m')
@@ -386,6 +400,7 @@ def plot_3d_trajectory(position: np.ndarray, target_position: np.ndarray | None,
 def plot_trajectory_position(
         position: np.ndarray, 
         target_position: np.ndarray | None, 
+        nominal_target_position: np.ndarray | None,
         time: np.ndarray | None, 
         wind_acceleration: np.ndarray | None,
         eval_name: str
@@ -415,6 +430,8 @@ def plot_trajectory_position(
     line_x_pos = ax_x.plot(time, position[:, 0], label='Position', linewidth=2, color='blue')
     if target_position is not None:
         line_x_target = ax_x.plot(time, target_position[:, 0], label='Target', linewidth=2, linestyle='--', color='red')
+    if nominal_target_position is not None:
+        line_x_nominal_target = ax_x.plot(time, nominal_target_position[:, 0], label='Nominal Target', linewidth=2, linestyle='--', color='green')
     ax_x.set_ylabel('X Position, m', color='blue')
     ax_x.tick_params(axis='y', labelcolor='blue')
     ax_x.grid(True)
@@ -437,6 +454,8 @@ def plot_trajectory_position(
     line_y_pos = ax_y.plot(time, position[:, 1], label='Position', linewidth=2, color='blue')
     if target_position is not None:
         line_y_target = ax_y.plot(time, target_position[:, 1], label='Target', linewidth=2, linestyle='--', color='red')
+    if nominal_target_position is not None:
+        line_y_nominal_target = ax_y.plot(time, nominal_target_position[:, 1], label='Nominal Target', linewidth=2, linestyle='--', color='green')
     ax_y.set_ylabel('Y Position, m', color='blue')
     ax_y.tick_params(axis='y', labelcolor='blue')
     ax_y.grid(True)
@@ -459,6 +478,8 @@ def plot_trajectory_position(
     line_z_pos = ax_z.plot(time, position[:, 2], label='Position', linewidth=2, color='blue')
     if target_position is not None:
         line_z_target = ax_z.plot(time, target_position[:, 2], label='Target', linewidth=2, linestyle='--', color='red')
+    if nominal_target_position is not None:
+        line_z_nominal_target = ax_z.plot(time, nominal_target_position[:, 2], label='Nominal Target', linewidth=2, linestyle='--', color='green')
     ax_z.set_xlabel(time_label)
     ax_z.set_ylabel('Z Position, m', color='blue')
     ax_z.tick_params(axis='y', labelcolor='blue')
