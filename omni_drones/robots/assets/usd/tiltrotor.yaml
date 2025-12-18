@@ -1,12 +1,12 @@
 name: tiltrotor
 inertia:
-  xx: 0.02
+  xx: 0.0621
   xy: 0.0
   xz: 0.0
-  yy: 0.02
-  yz: 0.0
-  zz: 0.04
-mass: 4.04
+  yy: 0.0621
+  yz: 0.0109
+  zz: 0.1365
+mass: 3.434
 l: 0.6
 drag_coef: 0.3
 rotor_configuration:
