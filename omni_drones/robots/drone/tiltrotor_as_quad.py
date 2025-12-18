@@ -21,14 +21,16 @@
 # SOFTWARE.
 
 
-from .multirotor import MultirotorBase
+import torch
 
-from .crazyflie import Crazyflie
-from .firefly import Firefly
-from .hummingbird import Hummingbird
-from .iris import Iris
-from .neo11 import Neo11
-from .omav import Omav
-from .dragon import Dragon
-from .tiltrotor import Tiltrotor
-from .tiltrotor_as_quad import TiltrotorAsQuad
+from omni.isaac.core.prims import RigidPrimView
+from torchrl.data import BoundedTensorSpec, UnboundedContinuousTensorSpec
+
+from omni_drones.robots.drone.multirotor import MultirotorBase
+from omni_drones.robots.robot import ASSET_PATH
+
+
+class TiltrotorAsQuad(MultirotorBase):
+
+    usd_path: str = ASSET_PATH + "/usd/tiltrotor_as_quad.usd"
+    param_path: str = ASSET_PATH + "/usd/tiltrotor_as_quad.yaml"
