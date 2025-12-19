@@ -1,1 +1,2 @@
 name: dummy
+train_every: 2048 #Meaningless for dummy
